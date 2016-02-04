@@ -37,17 +37,23 @@ public class SimonClient2 extends TeamClient {
 	static final double GOAL_SPIN = 1.7;
 	static final double MAX_FIRE_RANGE = 100;
 	static final double ANGLE_EPSILON = Math.PI/32;
+	static final double DIST_EPSILON = 10; // WTF I don't even know this is a total guess
 
 	private class KnowledgeRepOne {
 		//Keeps track of the closest beacon and the closest ship
 		Beacon closestBeacon;
 		Ship closestShip;
 		//If there's an asteroid on the path to the beacon, skirts around it first.
-		Location target;
+		Position target;
 		//Roughly, our goal is to fly to the beacon whilst shooting at the ship
 
-		boolean shouldShoot(Ship me) {
+		boolean shipIsClose(Space space, Ship me, Position loc) {
+			return space.getShortestDistance(me.getPosition(), loc) < DIST_EPSILON;
+		}
+
+		boolean shouldShoot(Space space, Ship me) {
 			if (closestShip == null) return false;
+			Vector2D displacement = space.findShortestDistanceVector(me.getPosition(), closestShip.getPosition());
 			//Construct coordinate system around my orientation
 			double norm = //Units along my line of sight
 			double tan = //Units side-to-side they are from my perspective
@@ -65,7 +71,7 @@ public class SimonClient2 extends TeamClient {
 			return sqrt(vec.x*vec.x + vec.y*vec.y);
 		}
 
-		void updateKnowledge(Ship me) {
+		void updateKnowledge(Space space, Ship me) {
 			//Find best beacaon
 			Beacon best;
 			for (Beacon b : beacons) {
@@ -75,32 +81,32 @@ public class SimonClient2 extends TeamClient {
 			if (best != closestBeacon) {
 				closestBeacon = best;
 				target = location(best);
-			} else if (shipIsClose(me, target)) {
-				//If we've reached our temporary target, try for the beacon again.
+			} else {
+				//Temporarily change our target to directly at the beacon
+				Position tmp = target;
 				target = location(best);
+				//If that wouldn't work and I'm not close enough to the temporary target to try anyway,
+				//*sigh* back to the temporary target
+				if (!targetSafe(me, false) && !shipIsClose(space, me, tmp)) target = tmp;
 			}
 			//Scoot the target to avoid asteroids
 			for (int i = 0; i < 10; i++) {
-				if (targetSafe(me)) break;
+				if (targetSafe(me, true)) break;
 			}
 			//Find best ship
-			closestShip = null;
-			for (Ship s : ships) {
-				if (onMyTeam(me, s)) continue;
-				if (better(s, closestShip, me)) closestShip = s;
-			}
+			closestShip = pickNearestEnemyShip(space, ship);
 		}
 
 		//Note: No guarantee that iterating over this method will produce a safe tempTarget, so cap iterations.
-		boolean targetSafe(Ship me) {
+		boolean targetSafe(Ship me, boolean update) {
 			for(Asteroid a : asteroids) {
-				if (asteroidBlocksTarget(a, me)) return false;
+				if (asteroidBlocksTarget(a, me, update)) return false;
 			}
 			return true;
 		}
 
 		//If the asteroid does in fact block the target, this function takes the liberty of reassigning the target.
-		boolean asteroidBlocksTarget(Asteroid a, Ship me) {
+		boolean asteroidBlocksTarget(Asteroid a, Ship me, boolean update) {
 			//Set up a coordinate system along the vector from me to my target
 			double dist = //Distance from me to target
 			double norm = //Coordinate of asteroid in coordinate system;
@@ -108,9 +114,35 @@ public class SimonClient2 extends TeamClient {
 			double radius = //my radius plus the asteroid's radius
 			if (norm > dist + radius || norm < 0) return false;
 			if (Math.abs(tan) > radius) return false;
+			if (!update) return true;
 			tan += radius*1.2; //There, now we're looking at a point to the right of the asteroid
 			//Convert back to global coordinate system, store in target
 			return true;
+		}
+		/**
+		 * Find the nearest ship on another team and aim for it.
+		 * Copied from AggressiveHeuristicAsteroidCollectorSingletonTeamClient (what a mouthful)
+		 * @param space
+		 * @param ship
+		 * @return
+		 */
+		private Ship pickNearestEnemyShip(Toroidal2DPhysics space, Ship ship) {
+			double minDistance = Double.POSITIVE_INFINITY;
+			Ship nearestShip = null;
+			for (Ship otherShip : space.getShips()) {
+				// don't aim for our own team (or ourself)
+				if (otherShip.getTeamName().equals(ship.getTeamName())) {
+					continue;
+				}
+				
+				double distance = space.findShortestDistance(ship.getPosition(), otherShip.getPosition());
+				if (distance < minDistance) {
+					minDistance = distance;
+					nearestShip = otherShip;
+				}
+			}
+			
+			return nearestShip;
 		}
 	}
 
