@@ -22,6 +22,7 @@ import spacesettlers.objects.resources.ResourcePile;
 import spacesettlers.objects.weapons.AbstractWeapon;
 import spacesettlers.simulator.Toroidal2DPhysics;
 import spacesettlers.utilities.Position;
+import spacesettlers.utilities.Vector2D;
 import spacesettlers.clients.TeamClient;
 /**
  * Simon's team; plays the aggressive route.
@@ -32,7 +33,6 @@ import spacesettlers.clients.TeamClient;
  */
 public class SimonClient2 extends TeamClient {
 
-	static double adjustedCruiseSpeed;
 	static final double CRUISE_SPEED = 100;
 	static final double GOAL_SPIN = 1.7;
 	static final double MAX_FIRE_RANGE = 100;
@@ -40,6 +40,7 @@ public class SimonClient2 extends TeamClient {
 	static final double DIST_EPSILON = 10; // WTF I don't even know this is a total guess
 
 	private class KnowledgeRepOne {
+		//TODO: Make "Ship me" a instance variable initialized by constructor?
 		//Keeps track of the closest beacon and the closest ship
 		Beacon closestBeacon;
 		Ship closestShip;
@@ -53,22 +54,23 @@ public class SimonClient2 extends TeamClient {
 
 		boolean shouldShoot(Space space, Ship me) {
 			if (closestShip == null) return false;
-			Vector2D displacement = space.findShortestDistanceVector(me.getPosition(), closestShip.getPosition());
+			Position p = me.getPosition();
+			Vector2D displacement = space.findShortestDistanceVector(p, closestShip.getPosition());
 			//Construct coordinate system around my orientation
-			double norm = //Units along my line of sight
-			double tan = //Units side-to-side they are from my perspective
+			double unx = Math.cos(p.getOrientation());
+			double uny = Math.sin(p.getOrientation());
+			//Compute the normal and other component
+			double norm = unx*displacement.getX() + uny*displacement.getY();
+			double tan = uny*displacement.getX() - unx*displacement.getY();
 			if (norm < 0 || norm > MAX_FIRE_RANGE) return false;
 			if (tan > closestShip.radius) return false;
 			return true;
 		}
 
-		double getThrust(Ship me) {
-			//Calculate vector difference from current speed to what I want
-			double angle = Math.atan2(vec.y, vec.x) - me.angle;
-			if (angle < -Math.PI) angle += 2*Math.PI;
-			else if (angle > Math.PI) angle -= 2*Math.PI;
-			if (Math.abs(angle) > ANGLE_EPSILON) return 0;
-			return sqrt(vec.x*vec.x + vec.y*vec.y);
+		Vector2D getThrust(Space space, Ship me) {
+			Vector2D displacement = space.findShortestDistanceVector(me.getPosition(), target);
+			displacement = displacement.unit()*CRUISE_SPEED;
+			return displacement.subtract(me.getPosition().getTranslationalVelocity()).divide(space.getTimestep());
 		}
 
 		void updateKnowledge(Space space, Ship me) {
@@ -148,7 +150,6 @@ public class SimonClient2 extends TeamClient {
 
 	@Override
 	public void initialize(Toroidal2DPhysics space) {
-		adjustedCruiseSpeed = CRUISE_SPEED * space.getTimestep();
 	}
 
 	@Override
