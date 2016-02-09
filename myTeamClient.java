@@ -9,10 +9,10 @@ import java.util.UUID;
 
 import spacesettlers.actions.AbstractAction;
 import spacesettlers.actions.DoNothingAction;
+import spacesettlers.actions.MoveAction;
 import spacesettlers.actions.MoveToObjectAction;
 import spacesettlers.actions.PurchaseCosts;
 import spacesettlers.actions.PurchaseTypes;
-import spacesettlers.actions.RawAction;
 import spacesettlers.clients.TeamClient;
 import spacesettlers.graphics.SpacewarGraphics;
 import spacesettlers.objects.AbstractActionableObject;
@@ -24,40 +24,35 @@ import spacesettlers.objects.Ship;
 import spacesettlers.objects.powerups.SpaceSettlersPowerupEnum;
 import spacesettlers.objects.resources.ResourcePile;
 import spacesettlers.simulator.Toroidal2DPhysics;
+import barn1474.KnowledgeRepTwo.shipState;
 /**
- * A team of random agents
+ * A team of agents that will generically go and get resources and bring them home
  * 
- * The agents pick a random location in space and aim for it.  They shoot somewhat randomly also.
- * @author 
+ * The
+ * @author barnett
  *
  */
 public class myTeamClient extends TeamClient {
 	HashSet<SpacewarGraphics> graphics;
 	Random random;
-	boolean fired = false;
-
-	public static int RANDOM_MOVE_RADIUS = 200;
-	public static double SHOOT_PROBABILITY = 0.1;
 	
-	private static final int LOW_FUEL = 1000;
+	private static final double APPROACH_VELOCITY = 1.0;
 	
 	@Override
 	public void initialize(Toroidal2DPhysics space) {
 		graphics = new HashSet<SpacewarGraphics>();
 		random = new Random();
 		
-		KnowledgeRepTwo.nearBase = new HashMap <UUID, Base>();
-		KnowledgeRepTwo.nearEnemy = new HashMap <UUID, Ship>();
-		KnowledgeRepTwo.mineableAsteroid = new HashMap <UUID, Asteroid>();
-		KnowledgeRepTwo.nearBeacon = new HashMap <UUID, Beacon>();
+		KnowledgeRepTwo.initializeKnowledge();
 		
 		//Store team name into a static string
 		KnowledgeRepTwo.myTeamName = getTeamName();
 		
-		//make a local list of our ships, to verify identities
+		//initialize list of ships and states
+		KnowledgeRepTwo.myShips = new HashMap<UUID, shipState>();
 		for (Ship s : space.getShips()){
 			if (s.getTeamName().equalsIgnoreCase(KnowledgeRepTwo.myTeamName)){
-				KnowledgeRepTwo.myShips.add(s);
+				KnowledgeRepTwo.myShips.put(s.getId(),KnowledgeRepTwo.shipState.GETTING_RESOURCES);
 			}
 		}
 	
@@ -75,63 +70,59 @@ public class myTeamClient extends TeamClient {
 		HashMap<UUID, AbstractAction> myActions = new HashMap<UUID, AbstractAction>();
 		
 		
-		
 		for (AbstractObject actionable :  actionableObjects) {
 			if (actionable instanceof Ship) {
 				Ship ship = (Ship) actionable;
 				AbstractAction current = ship.getCurrentAction();
 				
+				// change state based on what's going on
+				if (KnowledgeRepTwo.isOutOfGas(ship)) {KnowledgeRepTwo.myShips.put(ship.getId(), KnowledgeRepTwo.shipState.GETTING_GAS);}
+				else if (ship.getResources().getTotal() > 0) {KnowledgeRepTwo.myShips.put(ship.getId(), KnowledgeRepTwo.shipState.GOING_HOME);}
+				else if (ship.getResources().getTotal() == 0) {KnowledgeRepTwo.myShips.put(ship.getId(), KnowledgeRepTwo.shipState.GETTING_RESOURCES);}
 				
-				//SpacewarGraphics newgraphic = new CircleGraphics(NEAR_BASE_RADIUS, getTeamColor(), ship.getPosition());
-				//graphics.add(newgraphic);
-				
-				// if we finished, make a new spot in space to aim for
-				if (current == null || current.isMovementFinished(space)) {
-					
-					//let's get going!
-					if (ship.getPosition().getTotalTranslationalVelocity() < 10){
-						myActions.put(ship.getId(), new RawAction(10, 0));
+				// if there is bacon really close just get it without changing state
+				if (KnowledgeRepTwo.isBeaconNear(space, ship)){
+					myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), KnowledgeRepTwo.nearBeacon.get(ship.getId()).getPosition(), ship.getPosition().getTranslationalVelocity()));
+				}
+				else { //do something according to what state is guiding us
+					try{
+						switch(KnowledgeRepTwo.myShips.get(ship.getId())){
+						case GETTING_RESOURCES:
+							if (KnowledgeRepTwo.isMineableAsteroidAhead(space, ship)) {
+								myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), KnowledgeRepTwo.getObjectIntercept(KnowledgeRepTwo.mineableAsteroid.get(ship.getId())), KnowledgeRepTwo.mineableAsteroid.get(ship.getId()).getPosition().getTranslationalVelocity()));
+							}
+							else {
+								myActions.put(ship.getId(), current);
+							}
+							break;
+						case GETTING_GAS:
+							AbstractObject gas = KnowledgeRepTwo.myNearestRefuel(space, ship);
+							if (gas instanceof Base){ //base needs 0 approach velocity
+								myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), gas.getPosition()));
+							}
+							else { //beacon needs final velocity
+								myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), gas.getPosition(), ship.getPosition().getTranslationalVelocity()));
+							}
+							
+							break;
+						case GOING_HOME:
+							myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), KnowledgeRepTwo.myNearestBase(space, ship).getPosition()));
+							break;
+						}
 					}
-					//if we are out of gas we need to get more energy...
-					else if (ship.getEnergy() < LOW_FUEL) {
-						if (KnowledgeRepTwo.isBeaconNear(space, ship)){
-							myActions.put(ship.getId(), new MoveToObjectAction(space, ship.getPosition(), KnowledgeRepTwo.nearBeacon.get(ship.getId())));
-						}
-						else if (KnowledgeRepTwo.isHomeBaseNear(space, ship)){
-							myActions.put(ship.getId(), new MoveToObjectAction(space, ship.getPosition(), KnowledgeRepTwo.nearBase.get(ship.getId())));
-						}
-						else { 
-							//conserve energy by doing nothing
-							myActions.put(ship.getId(), new DoNothingAction());
-						}
+					catch (NoObjectReturnedException e) {
+							
+						myActions.put(ship.getId(), current);
 					}
-					else if (ship.getResources().getTotal() > 0) { //head home with resources
-						if (KnowledgeRepTwo.isHomeBaseNear(space, ship)) {
-							myActions.put(ship.getId(),  new MoveToObjectAction(space, ship.getPosition(), KnowledgeRepTwo.nearBase.get(ship.getId())));
-						}
-						//do nothing
-						else myActions.put(ship.getId(), new DoNothingAction());
-					}
-					//ship does not have resources and is not low on fuel
-					else {
-						if (KnowledgeRepTwo.isMineableAsteroidAhead(space, ship)) {
-							myActions.put(ship.getId(), new MoveToObjectAction(space, ship.getPosition(), KnowledgeRepTwo.mineableAsteroid.get(ship.getId())));
-						}
-						else myActions.put(ship.getId(), new DoNothingAction());
-					}
-					
-				} else {
-					myActions.put(ship.getId(), new DoNothingAction());
 				}
 				
-			} else {
-				// it is a base
+			}
+			else // it is a base
+			{
 				myActions.put(actionable.getId(), new DoNothingAction());
-		}
+			}
 			
-
 		}
-	
 		
 		return myActions;
 	
