@@ -38,21 +38,41 @@ public class SimonClient2 extends TeamClient {
 	static final double CRUISE_SPEED = 50;
 
 	private class KnowledgeRepOne {
-		//This will either be a mineable asteroid, or the base.
+		/**
+		 * This will either be a mineable asteroid, or the base.
+		 * This is a UUID, so it's persistent.
+		 */
 		UUID objectiveID = null;
+		/**
+		 * The object corresponding to objectiveID.
+		 * This is an object, so we actually do our calculations with this.
+		 */
 		AbstractObject objective = null;
 		//If there's an asteroid on the path to the beacon, skirts around it first.
-		//Since movement is done in the frame of reference of our target, this stores displacement from the target.
+		/**
+		 * Since movement is done in the frame of reference of our target, this stores displacement from the target.
+		 */
 		Vector2D target;
 
+		/**
+		 * Since the target is a displacement, this function converts to a global position
+		 */
 		Position getTargetPosition() {
 			return new Position(new Vector2D(objective.getPosition()).add(target));
 		}
 
+		/**
+		 * Are we close enough to target?
+		 * @return whether or not the distance to target is less than the ship's radius
+		 */
 		boolean closeToTarget(Toroidal2DPhysics space, Ship me) {
 			return space.findShortestDistance(me.getPosition(), getTargetPosition()) < me.getRadius();
 		}
 
+		/**
+		 * Gives the thrust vector to head towards the target.
+		 * Assumes we can accelerate instantly.
+		 */
 		Vector2D getThrust(Toroidal2DPhysics space, Ship me) {
 			if (objective == null) return new Vector2D(0, 0);
 			Vector2D vec = space.findShortestDistanceVector(me.getPosition(), getTargetPosition());
@@ -62,6 +82,10 @@ public class SimonClient2 extends TeamClient {
 			return vec.divide(space.getTimestep());
 		}
 
+		/**
+		 * Finds the home base corresponding to my ship
+		 * @return The home base for our team, or null if none is found
+		 */
 		AbstractObject getHomeBase(Toroidal2DPhysics space, Ship me) {
 			for (Base b : space.getBases()) {
 				if (!b.isHomeBase()) continue;
@@ -72,6 +96,10 @@ public class SimonClient2 extends TeamClient {
 			return null;
 		}
 
+		/**
+		 * Updates our objective and target.
+		 * Should be called once per tick.
+		 */
 		void updateKnowledge(Toroidal2DPhysics space, Ship me) {
 			//myOut.println("(got here)");
 			//No use pursuing something that isn't there.
@@ -129,11 +157,19 @@ public class SimonClient2 extends TeamClient {
 			}
 		}
 
+		/**
+		 * Compares UUIDs to check if two AbstractObjects are the same thing.
+		 * Seemed to fix an error where it wasn't recognizing a ship as being myself, so it stays.
+		 */
 		boolean sameThing(AbstractObject a, AbstractObject b) {
 			return a.getId().equals(b.getId());
 		}
 
-		//Note: No guarantee that iterating over this method will produce a safe tempTarget, so cap iterations.
+		/**
+		 * Checks to see if there are any obstructions between me and my target, possibly updating the target if there are.
+		 * Note that calling this function repeatedly isn't guaranteed to generate a safe target, so cap any iterations.
+		 * @param update Whether or not to update the target in case of obstruction
+		 */
 		boolean targetSafe(Toroidal2DPhysics space, Ship me, boolean update) {
 			for (Asteroid a : space.getAsteroids()) {
 				if (sameThing(a, objective)) continue;
@@ -150,7 +186,13 @@ public class SimonClient2 extends TeamClient {
 			return true;
 		}
 
-		//If the asteroid does in fact block the target, this function takes the liberty of reassigning the target.
+		/**
+		 * Helper to targetSafe, shouldn't be called directly.
+		 * Checks to see if a particular object is in the way of our target.
+		 * @param a The object to be tested
+		 * @return true iff the object is in the way
+		 * @see targetSafe
+		 */
 		boolean thingBlocksTarget(Toroidal2DPhysics space, AbstractObject a, Ship me, boolean update) {
 			Position t = getTargetPosition();
 			Vector2D displacement = space.findShortestDistanceVector(t, me.getPosition());
@@ -177,49 +219,40 @@ public class SimonClient2 extends TeamClient {
 		}
 	}
 
-	PrintStream myOut;
+	//PrintStream myOut;
 
 	@Override
 	public void initialize(Toroidal2DPhysics space) {
-		try {
+		/*try {
 			myOut = new PrintStream("log.txt");
 		} catch (Exception e) {
 			System.exit(2);
-		}
+		}*/
 	}
 
 	@Override
 	public void shutDown(Toroidal2DPhysics space) {
-		myOut.close();
+		//myOut.close();
 	}
 
 	@Override
 	public Map<UUID, AbstractAction> getMovementStart(Toroidal2DPhysics space,
 			Set<AbstractActionableObject> actionableObjects) {
-		//myOut.println("I'm being called");
 		HashMap<UUID, AbstractAction> actions = new HashMap<UUID, AbstractAction>();
 
 		for (AbstractObject actionable :  actionableObjects) {
 			if (!(actionable instanceof Ship)) {
-				//myOut.println("\tNot a ship");
 				// it is a base and nobody cares about them, lol
 				actions.put(actionable.getId(), new DoNothingAction());
 				continue;
 			}
-			//myOut.println("\tA ship");
 			Ship ship = (Ship) actionable;
 
 			if (!knowledgeMap.containsKey(ship.getId())) {
 				knowledgeMap.put(ship.getId(), new KnowledgeRepOne());
 			}
 			KnowledgeRepOne data = knowledgeMap.get(ship.getId());
-			//myOut.println("\t\tIn again");
-			//try {
-				data.updateKnowledge(space, ship);
-			/*} catch (Exception e) {
-				e.printStackTrace(myOut);
-			}*/
-			//myOut.println("\t\tOut again");
+			data.updateKnowledge(space, ship);
 			
 			Vector2D thrust = data.getThrust(space, ship);
 			actions.put(ship.getId(), new RawAction(thrust, 0));
