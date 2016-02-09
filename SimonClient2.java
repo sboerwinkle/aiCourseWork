@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.io.PrintStream;
 
 import spacesettlers.actions.AbstractAction;
 import spacesettlers.actions.DoNothingAction;
@@ -14,9 +15,7 @@ import spacesettlers.actions.PurchaseCosts;
 import spacesettlers.actions.PurchaseTypes;
 import spacesettlers.graphics.CircleGraphics;
 import spacesettlers.graphics.SpacewarGraphics;
-import spacesettlers.objects.AbstractActionableObject;
-import spacesettlers.objects.AbstractObject;
-import spacesettlers.objects.Ship;
+import spacesettlers.objects.*;
 import spacesettlers.objects.powerups.SpaceSettlersPowerupEnum;
 import spacesettlers.objects.resources.ResourcePile;
 import spacesettlers.objects.weapons.AbstractWeapon;
@@ -25,162 +24,207 @@ import spacesettlers.utilities.Position;
 import spacesettlers.utilities.Vector2D;
 import spacesettlers.clients.TeamClient;
 /**
- * Simon's team; plays the aggressive route.
+ * Simon's team; plays the cooperative route.
  *
- * Tries to get to beacons whilst avoiding asteroids, and shoots when opportune. Also, it always spins with a constant speed.
+ * Alternates between going after the base and going after a mineable asteroid (closest w/ clear line-of-sight at time of decision)
  * @author Simon
  *
  */
 public class SimonClient2 extends TeamClient {
 
-	static final double CRUISE_SPEED = 100;
-	static final double GOAL_SPIN = 1.7;
-	static final double MAX_FIRE_RANGE = 100;
-	static final double ANGLE_EPSILON = Math.PI/32;
-	static final double DIST_EPSILON = 10; // WTF I don't even know this is a total guess
+	HashMap<UUID, KnowledgeRepOne> knowledgeMap = new HashMap<UUID, KnowledgeRepOne>();
+
+	//Rather than this PD jazz, we fly at constant speed. This is that speed.
+	static final double CRUISE_SPEED = 50;
 
 	private class KnowledgeRepOne {
-		//TODO: Make "Ship me" a instance variable initialized by constructor?
-		//Keeps track of the closest beacon and the closest ship
-		Beacon closestBeacon;
-		Ship closestShip;
+		//This will either be a mineable asteroid, or the base.
+		UUID objectiveID = null;
+		AbstractObject objective = null;
 		//If there's an asteroid on the path to the beacon, skirts around it first.
-		Position target;
-		//Roughly, our goal is to fly to the beacon whilst shooting at the ship
+		//Since movement is done in the frame of reference of our target, this stores displacement from the target.
+		Vector2D target;
 
-		boolean shipIsClose(Space space, Ship me, Position loc) {
-			return space.getShortestDistance(me.getPosition(), loc) < DIST_EPSILON;
+		Position getTargetPosition() {
+			return new Position(new Vector2D(objective.getPosition()).add(target));
 		}
 
-		boolean shouldShoot(Space space, Ship me) {
-			if (closestShip == null) return false;
-			Position p = me.getPosition();
-			Vector2D displacement = space.findShortestDistanceVector(p, closestShip.getPosition());
-			//Construct coordinate system around my orientation
-			double unx = Math.cos(p.getOrientation());
-			double uny = Math.sin(p.getOrientation());
-			//Compute the normal and other component
-			double norm = unx*displacement.getX() + uny*displacement.getY();
-			double tan = uny*displacement.getX() - unx*displacement.getY();
-			if (norm < 0 || norm > MAX_FIRE_RANGE) return false;
-			if (tan > closestShip.radius) return false;
-			return true;
+		boolean closeToTarget(Toroidal2DPhysics space, Ship me) {
+			return space.findShortestDistance(me.getPosition(), getTargetPosition()) < me.getRadius();
 		}
 
-		Vector2D getThrust(Space space, Ship me) {
-			Vector2D displacement = space.findShortestDistanceVector(me.getPosition(), target);
-			displacement = displacement.unit()*CRUISE_SPEED;
-			return displacement.subtract(me.getPosition().getTranslationalVelocity()).divide(space.getTimestep());
+		Vector2D getThrust(Toroidal2DPhysics space, Ship me) {
+			if (objective == null) return new Vector2D(0, 0);
+			Vector2D vec = space.findShortestDistanceVector(me.getPosition(), getTargetPosition());
+			vec = vec.unit().multiply(CRUISE_SPEED);
+			//vec = vec.add(objective.getPosition().getTranslationalVelocity());
+			vec = vec.subtract(me.getPosition().getTranslationalVelocity());
+			return vec.divide(space.getTimestep());
 		}
 
-		void updateKnowledge(Space space, Ship me) {
-			//Find best beacaon
-			Beacon best;
-			for (Beacon b : beacons) {
-				if (better(b, best, me)) best = b;
+		AbstractObject getHomeBase(Toroidal2DPhysics space, Ship me) {
+			for (Base b : space.getBases()) {
+				if (!b.isHomeBase()) continue;
+				if (b.getTeamName().equals(me.getTeamName()))
+					return b;
 			}
-			//If it's not the one we were pursuing previously, reset our target
-			if (best != closestBeacon) {
-				closestBeacon = best;
-				target = location(best);
+			System.err.println("Can't find a home base for ship:\n" + me);
+			return null;
+		}
+
+		void updateKnowledge(Toroidal2DPhysics space, Ship me) {
+			//myOut.println("(got here)");
+			//No use pursuing something that isn't there.
+			objective = objectiveID == null ? null : space.getObjectById(objectiveID);
+			if (objective != null && !objective.isAlive()) {
+				objectiveID = null;
+				objective = null;
+			}
+			//If we have no objective (but do have minerals), head home.
+			if (objective == null) {// && me.getResources().getMass() != 0) {
+				objective = getHomeBase(space, me);
+				objectiveID = objective.getId();
+				target = new Vector2D(0, 0);
+			}
+			//If he have no resources (And aren't already hunting an asteroid), pick an asteroid to hunt.
+			if ((objective == null || objective instanceof Base) && me.getResources().getMass() == 0) {
+				Asteroid besteroid = null;
+				double bestDist = Double.MAX_VALUE;
+				target = new Vector2D(0, 0);
+				for (Asteroid a : space.getAsteroids()) {
+					//It must be mineable
+					if (!a.isMineable()) continue;
+					//Close to me
+					double dist = space.findShortestDistance(a.getPosition(), me.getPosition());
+					if (dist > bestDist) continue;
+					//And free of obstructions
+					objective = a;
+					if (!targetSafe(space, me, false)) continue;
+					besteroid = a;
+					bestDist = dist;
+				}
+				objective = besteroid;
+				objectiveID = objective == null ? null : objective.getId();
+				if (objective == null) return;
 			} else {
-				//Temporarily change our target to directly at the beacon
-				Position tmp = target;
-				target = location(best);
-				//If that wouldn't work and I'm not close enough to the temporary target to try anyway,
-				//*sigh* back to the temporary target
-				if (!targetSafe(me, false) && !shipIsClose(space, me, tmp)) target = tmp;
+				//If we're sticking with the old target, check to see if:
+				//	We've reached our temporary target, or
+				//	The path straight to the objective is clear.
+
+				//If I'm close to the temporary target, try to head home
+				if (closeToTarget(space, me)) {
+					target = new Vector2D(0, 0);
+				} else {
+					//Temporarily change our target to directly at the objective
+					Vector2D tmp = target;
+					target = new Vector2D(0, 0);
+					//If that wouldn't work, *sigh* back to the temporary target
+					if (!targetSafe(space, me, false)) target = tmp;
+				}
 			}
-			//Scoot the target to avoid asteroids
+			//myOut.println("(got there)");
+			//Scoot the target to avoid obstacles
 			for (int i = 0; i < 10; i++) {
-				if (targetSafe(me, true)) break;
+				if (targetSafe(space, me, true)) break;
 			}
-			//Find best ship
-			closestShip = pickNearestEnemyShip(space, ship);
+		}
+
+		boolean sameThing(AbstractObject a, AbstractObject b) {
+			return a.getId().equals(b.getId());
 		}
 
 		//Note: No guarantee that iterating over this method will produce a safe tempTarget, so cap iterations.
-		boolean targetSafe(Ship me, boolean update) {
-			for(Asteroid a : asteroids) {
-				if (asteroidBlocksTarget(a, me, update)) return false;
+		boolean targetSafe(Toroidal2DPhysics space, Ship me, boolean update) {
+			for (Asteroid a : space.getAsteroids()) {
+				if (sameThing(a, objective)) continue;
+				if (thingBlocksTarget(space, a, me, update)) return false;
+			}
+			for (Base a : space.getBases()) {
+				if (sameThing(a, objective)) continue;
+				if (thingBlocksTarget(space, a, me, update)) return false;
+			}
+			for (Ship a : space.getShips()) {
+				if (sameThing(a, me)) continue;
+				if (thingBlocksTarget(space, a, me, update)) return false;
 			}
 			return true;
 		}
 
 		//If the asteroid does in fact block the target, this function takes the liberty of reassigning the target.
-		boolean asteroidBlocksTarget(Asteroid a, Ship me, boolean update) {
-			//Set up a coordinate system along the vector from me to my target
-			double dist = //Distance from me to target
-			double norm = //Coordinate of asteroid in coordinate system;
-			double tan = //Other coordinate of asteroid in coordinate system;
-			double radius = //my radius plus the asteroid's radius
-			if (norm > dist + radius || norm < 0) return false;
+		boolean thingBlocksTarget(Toroidal2DPhysics space, AbstractObject a, Ship me, boolean update) {
+			Position t = getTargetPosition();
+			Vector2D displacement = space.findShortestDistanceVector(t, me.getPosition());
+			double dist = displacement.getMagnitude();
+			Vector2D unitNorm = displacement.unit();
+			Vector2D unitTan = new Vector2D(-unitNorm.getYValue(), unitNorm.getXValue());
+			displacement = space.findShortestDistanceVector(t, a.getPosition());
+			//Set up a coordinate system along the vector from my target to me
+			double norm = displacement.dot(unitNorm);
+			double tan = displacement.dot(unitTan);
+			double radius = me.getRadius() + a.getRadius();
+			if (norm > dist || norm < -radius) return false;
 			if (Math.abs(tan) > radius) return false;
 			if (!update) return true;
-			tan += radius*1.2; //There, now we're looking at a point to the right of the asteroid
-			//Convert back to global coordinate system, store in target
+			myOut.println("We've got coordinates of <"+norm+", "+tan+">, dist is "+dist+", radius is "+radius+".\nCurrent target position is readin' as "+target);
+			//If we've gotten this far, it's our task to move "target" to point around the obstruction.
+			Vector2D drift = a.getPosition().getTranslationalVelocity().subtract(objective.getPosition().getTranslationalVelocity());
+			if (drift.dot(unitTan) > 0) tan -= radius*1.2;
+			else tan += radius*1.2;
+
+			//Convert back to objective's coordinate system, store in target
+			target = unitNorm.multiply(norm).add(unitTan.multiply(tan)).add(target);
 			return true;
-		}
-		/**
-		 * Find the nearest ship on another team and aim for it.
-		 * Copied from AggressiveHeuristicAsteroidCollectorSingletonTeamClient (what a mouthful)
-		 * @param space
-		 * @param ship
-		 * @return
-		 */
-		private Ship pickNearestEnemyShip(Toroidal2DPhysics space, Ship ship) {
-			double minDistance = Double.POSITIVE_INFINITY;
-			Ship nearestShip = null;
-			for (Ship otherShip : space.getShips()) {
-				// don't aim for our own team (or ourself)
-				if (otherShip.getTeamName().equals(ship.getTeamName())) {
-					continue;
-				}
-				
-				double distance = space.findShortestDistance(ship.getPosition(), otherShip.getPosition());
-				if (distance < minDistance) {
-					minDistance = distance;
-					nearestShip = otherShip;
-				}
-			}
-			
-			return nearestShip;
 		}
 	}
 
+	PrintStream myOut;
+
 	@Override
 	public void initialize(Toroidal2DPhysics space) {
+		try {
+			myOut = new PrintStream("log.txt");
+		} catch (Exception e) {
+			System.exit(2);
+		}
 	}
 
 	@Override
 	public void shutDown(Toroidal2DPhysics space) {
+		myOut.close();
 	}
 
 	@Override
 	public Map<UUID, AbstractAction> getMovementStart(Toroidal2DPhysics space,
 			Set<AbstractActionableObject> actionableObjects) {
-		HashMap<UUID, AbstractAction> randomActions = new HashMap<UUID, AbstractAction>();
+		//myOut.println("I'm being called");
+		HashMap<UUID, AbstractAction> actions = new HashMap<UUID, AbstractAction>();
 
 		for (AbstractObject actionable :  actionableObjects) {
-			if (actionable instanceof Ship) {
-				Ship ship = (Ship) actionable;
-				AbstractAction current = ship.getCurrentAction();
-
-				// if we finished, make a new spot in space to aim for
-				if (current == null || current.isMovementFinished(space)) {
-					double vel = GOAL_SPIN - ship.getPosition().getAngularVelocity();
-					if (vel == 0) continue;
-					RawAction newAction = new RawAction(0, vel/space.getTimestep());
-					randomActions.put(ship.getId(), newAction);
-				} else {
-					randomActions.put(ship.getId(), ship.getCurrentAction());
-				}
-			} else {
-				// it is a base and random doesn't do anything to bases
-				randomActions.put(actionable.getId(), new DoNothingAction());
+			if (!(actionable instanceof Ship)) {
+				//myOut.println("\tNot a ship");
+				// it is a base and nobody cares about them, lol
+				actions.put(actionable.getId(), new DoNothingAction());
+				continue;
 			}
+			//myOut.println("\tA ship");
+			Ship ship = (Ship) actionable;
+
+			if (!knowledgeMap.containsKey(ship.getId())) {
+				knowledgeMap.put(ship.getId(), new KnowledgeRepOne());
+			}
+			KnowledgeRepOne data = knowledgeMap.get(ship.getId());
+			//myOut.println("\t\tIn again");
+			//try {
+				data.updateKnowledge(space, ship);
+			/*} catch (Exception e) {
+				e.printStackTrace(myOut);
+			}*/
+			//myOut.println("\t\tOut again");
+			
+			Vector2D thrust = data.getThrust(space, ship);
+			actions.put(ship.getId(), new RawAction(thrust, 0));
 		}
-		return randomActions;
+		return actions;
 	}
 
 	@Override
@@ -195,18 +239,17 @@ public class SimonClient2 extends TeamClient {
 
 	@Override
 	/**
-	 * Random never purchases
+	 * For the time being, we'll focus on collection, not purchasing extra ships...
 	 */
 	public Map<UUID, PurchaseTypes> getTeamPurchases(Toroidal2DPhysics space,
 			Set<AbstractActionableObject> actionableObjects,
 			ResourcePile resourcesAvailable,
 			PurchaseCosts purchaseCosts) {
 		return new HashMap<UUID,PurchaseTypes>();
-
 	}
 
 	/**
-	 * This is the new way to shoot (and use any other power up once they exist)
+	 * Pacifism for the win
 	 */
 	public Map<UUID, SpaceSettlersPowerupEnum> getPowerups(Toroidal2DPhysics space,
 			Set<AbstractActionableObject> actionableObjects) {
