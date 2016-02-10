@@ -1,15 +1,43 @@
--Describes knowledge representation in full detail
-	The first knowledge representation we used kept track of only an objective and a temporary target. The objective would be either a mineable asteroid or the home base. The temporary target is measured as a displacement from this target, and is set to a non-zero value whenever something passes between the ship and its target. This is intended to allow the ship to skirt the obstacle, and then continue pursuit of the objective.
-	Specifically, all the ships, asteroids, and bases in the game are tested to see if they intersect the ship-sized swath that the ship cuts on its way to the temporary target. If they would, the temporary target is set to one side of the obstruction, with a displacement having magnitude equal to 1.2 times the combined radius of the ship and the obstruction. If the obstruction is drifting to the left or right across the ship's field of view, the target is placed on the opposite side of said obstruction, so that we won't have to move the target next tick when the obstruction drifts further.
-	The temporary target is zeroed (reset to the objective, since it's a displacment) when either of two situations occur:
-	A) The path straight to the objective becomes clear, in which case whatever situation created the waypoint is now irrelevant
-	B) We've reached the temporary target. In this case there's a fair chance that something else is now in the way, and a new temporary target will shortly be computed.
 
--Heuristic used
-The heuristic used tries to fly in a straight line at constant speed (the speed of a speeding bullet) towards the target. If it has minerals it goes to its home base, otherwise it chooses whichever mineable asteroid is closest to the base and has a clear line of sight to the ship. It doesn't bother to slow down before collecting asteroids, because that takes time and we visit home base often enough for energy to not be a serious concern.
+EN Barnett
+Simon Boerwinkle
 
--Why these were good choices
-The knowledge representation and heuristic chosen combine to make a very single-minded agent, which is suitable for a first attempt at an environment where the goal is clearly defined. The heuristic alternates bases and asteroids to minimize risk of lost cargo, and doesn't both with deceleration to save time. The knowledge representation stores only the bare minimum needed to avoid unnecessary collisions, and stores the information persistently to avoid unnecessry recalculation.
+CS 5013
+Project 1
 
--Why we chose co-op path
-We chose to participate in the co-op ladder because it's a more stable environment - we know exactly who we'll be competing with, so we can know in adance when we have a sufficiently good agent.
+
+Explanation of Knowledge Representation
+
+The file KnowledgeRepTwo.java contains static methods that allow our agent access to information necessary in order to fulfil tasks in the space settlers arena. The inspiration for this knowledge representation was a relational model that was egocentric, although some additional morphing of the model was needed to increase its usefulness.
+
+The knowledge is build around three basic tasks for the coop game. The ship will either be gathering resources, going to home base with the resources it has, or looking for energy. These states are represented in a hashmap of UUIDs to an enumerated type so that each ship on the team can have a different current state. The following egocentric functions allow each ship to find things that are near it:
+
+myNearestBase returns the team base that is closest to a given ship.
+myNearestRefuel returns either a base or a beacon that is closest to a given ship.
+asteroidNearestBase returns the asteroid that is closes in distance to the home base.
+
+In addition, there are boolean methods that tell the agent what is going on:
+
+isBeaconNear returns true if there is an energy beacon inside of a small radius from a given ship.
+isEnemyNear returns true for a given ship if it is near a ship not on this team.
+ifMineableAsteroidAhead returns true if there exists a mineable asteroid within a cone of vision in front of the specified ship as it travels.
+isOutOfGas returns true if a ship's energy is below a threshold.
+
+All of the methods above, except for myNearestRefuel and isOutOfGas, store the object that caused the method to return or to return true in a hashmap where it is associated with the UUID of the ship the search was based on.
+
+Lastly, a rudimentary attempt was made to calculate an intercept point for objects that are travelling in space so that a ship can find the object by driving to where it will be and not where it is right now. This method is called getObjectIntercept and returns a calculated position based on an object.
+
+
+Explanation of Heuristic
+
+The client code would give the same strategy to any number of ships on the team, but for now there is only one ship. The ship starts out in the get resources state, which seeks out the resource-bearing asteroid that is closest to home base. Once it has resources aboard the state changes to a homing state where it seeks to deposit the resources on the base. If at any time the ship passes in close proximity to an energy beacon it will temporarily interrupt its search in order to get the energy. Otherwise it only seeks out energy, be it from beacon or a base, when it is low on fuel.
+
+
+Justification of Choices
+
+The knowledge representation does ignore objects such as asteroids that are not mineable, but it still provides good information that works in the majority of cases given the object density of the average playing field. One of the more important choices was to go for the resources that were closes to base because energy management is rudimentary and the ship many times would run out of energy before making it back to base. Seeking resources that are close to the drop point increases drastically the probability of being able to deposit them. Other than that, all of the major elements of the game that are necessary for the team to score points in a basic way are included in the knowledge representation.
+
+For the coop mode the heuristic can be quite simple and still work so the choice of the three ship states described above seems to provide the core steps needed to obtain points without getting lost in many other tasks or details. One slight deviation from the task it to pick up beacon en route, but we believe this to be an optimization of time spent navigating because it increases the chances of making it back to base successfully.
+
+
+We chose the coop project path in order to focus on simple optimization and efficiency problems in resource collection without having to worry so much about adversarial strategy. Also, why not be peaceful in space since it's hard enough to survive in a vacuum as it is?
