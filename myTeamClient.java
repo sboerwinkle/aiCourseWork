@@ -88,12 +88,21 @@ public class myTeamClient extends TeamClient {
 					try{
 						switch(KnowledgeRepTwo.myShips.get(ship.getId())){
 						case GETTING_RESOURCES:
+							Asteroid newAsteroid = null;
+							for (Base base : space.getBases()){
+								if (base.getTeamName().equals(getTeamName())){
+									newAsteroid = KnowledgeRepTwo.asteroidNearestBase(space, ship, base);
+									break; //for now only one base
+								}
+							}
+							myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), KnowledgeRepTwo.getObjectIntercept(newAsteroid), newAsteroid.getPosition().getTranslationalVelocity()));
+							/*
 							if (KnowledgeRepTwo.isMineableAsteroidAhead(space, ship)) {
 								myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), KnowledgeRepTwo.getObjectIntercept(KnowledgeRepTwo.mineableAsteroid.get(ship.getId())), KnowledgeRepTwo.mineableAsteroid.get(ship.getId()).getPosition().getTranslationalVelocity()));
 							}
 							else {
 								myActions.put(ship.getId(), current);
-							}
+							}*/
 							break;
 						case GETTING_GAS:
 							AbstractObject gas = KnowledgeRepTwo.myNearestRefuel(space, ship);
