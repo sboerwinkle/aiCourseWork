@@ -1,4 +1,4 @@
-package boer2245;
+package barn1474;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -7,7 +7,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
-import boer2245.KnowledgeRepTwo.shipState;
+import barn1474.KnowledgeRepTwo.shipState;
 import spacesettlers.actions.AbstractAction;
 import spacesettlers.actions.DoNothingAction;
 import spacesettlers.actions.MoveAction;
@@ -41,10 +41,10 @@ public class myTeamClient extends TeamClient {
 	@Override
 	public void initialize(Toroidal2DPhysics space) {
 		KnowledgeRepTwo.initializeKnowledge();
-
+		
 		//Store team name into a static string
 		KnowledgeRepTwo.myTeamName = getTeamName();
-
+		
 		//initialize list of ships and states
 		KnowledgeRepTwo.myShips = new HashMap<UUID, shipState>();
 		for (Ship s : space.getShips()){
@@ -74,12 +74,12 @@ public class myTeamClient extends TeamClient {
 			Ship ship = (Ship) actionable;
 			if (useSecondAi) {
 				AbstractAction current = ship.getCurrentAction();
-
+				
 				// change state based on what's going on
 				if (KnowledgeRepTwo.isOutOfGas(ship)) {KnowledgeRepTwo.myShips.put(ship.getId(), KnowledgeRepTwo.shipState.GETTING_GAS);}
 				else if (ship.getResources().getTotal() > 0) {KnowledgeRepTwo.myShips.put(ship.getId(), KnowledgeRepTwo.shipState.GOING_HOME);}
 				else if (ship.getResources().getTotal() == 0) {KnowledgeRepTwo.myShips.put(ship.getId(), KnowledgeRepTwo.shipState.GETTING_RESOURCES);}
-
+				
 				// if there is bacon really close just get it without changing state
 				if (KnowledgeRepTwo.isBeaconNear(space, ship)){
 					myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), KnowledgeRepTwo.nearBeacon.get(ship.getId()).getPosition(), ship.getPosition().getTranslationalVelocity()));
@@ -112,7 +112,7 @@ public class myTeamClient extends TeamClient {
 							else { //beacon needs final velocity
 								myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), gas.getPosition(), ship.getPosition().getTranslationalVelocity()));
 							}
-
+							
 							break;
 						case GOING_HOME:
 							myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), KnowledgeRepTwo.myNearestBase(space, ship).getPosition()));
@@ -120,7 +120,7 @@ public class myTeamClient extends TeamClient {
 						}
 					}
 					catch (NoObjectReturnedException e) {
-
+							
 						myActions.put(ship.getId(), current);
 					}
 				}
