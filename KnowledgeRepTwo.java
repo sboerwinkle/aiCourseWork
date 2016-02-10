@@ -1,4 +1,4 @@
-package barn1474;
+package boer2245;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -156,8 +156,9 @@ public class KnowledgeRepTwo {
 	public static Asteroid asteroidNearestBase(Toroidal2DPhysics space, Ship ship, Base base) throws NoObjectReturnedException {
 		mineableAsteroid.put(ship.getId(), null);
 		for (Asteroid asteroid :  space.getAsteroids()) {
-			if (mineableAsteroid.get(ship.getId()) == null ||
-					space.findShortestDistance(asteroid.getPosition(), base.getPosition()) < space.findShortestDistance(mineableAsteroid.get(ship.getId()).getPosition(),base.getPosition())){
+			if (asteroid.isMineable() &&
+					(mineableAsteroid.get(ship.getId()) == null ||
+					space.findShortestDistance(asteroid.getPosition(), base.getPosition()) < space.findShortestDistance(mineableAsteroid.get(ship.getId()).getPosition(),base.getPosition()))){
 				mineableAsteroid.put(ship.getId(), asteroid);
 			}
 		}
