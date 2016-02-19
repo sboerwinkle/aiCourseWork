@@ -1,122 +1,106 @@
-~(load "macros.scm")
 
 
 package brya3525;
 
-~(java-import '(
-	(java
-		(util
-			HashMap
-			HashSet
-			Map
-			Random
-			Set
-			UUID
-			(concurrent
-			 	ExecutorService
-				Executors
-				Callable
-				Future))
-		 (awt
-			Color))
-	(brya3525
-		TextGraphics
-		Knowledge
-		Prescience
-		SpaceSimulation
-		LibrePD)
-	(spacesettlers
-		(actions
-			AbstractAction
-			DoNothingAction
-			MoveAction
-			RawAction
-			PurchaseTypes
-			PurchaseCosts)
-		(graphics
-			CircleGraphics
-			SpacewarGraphics)
-		(objects
-			AbstractActionableObject
-			AbstractObject
-			Ship
-			(powerups
-				SpaceSettlersPowerupEnum)
-			(resources
-				ResourcePile)
-			(weapons
-				AbstractWeapon))
-		(simulator
-			Toroidal2DPhysics)
-		(utilities
-			Position
-			Vector2D))))
-			
-class LibrePD{
-	double krv,krp;
-	double ktv,ktp;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.awt.Color;
+import brya3525.TextGraphics;
+import brya3525.Knowledge;
+import brya3525.Prescience;
+import brya3525.SpaceSimulation;
+import brya3525.LibrePD;
+import spacesettlers.actions.AbstractAction;
+import spacesettlers.actions.DoNothingAction;
+import spacesettlers.actions.MoveAction;
+import spacesettlers.actions.RawAction;
+import spacesettlers.actions.PurchaseTypes;
+import spacesettlers.actions.PurchaseCosts;
+import spacesettlers.graphics.CircleGraphics;
+import spacesettlers.graphics.SpacewarGraphics;
+import spacesettlers.objects.AbstractActionableObject;
+import spacesettlers.objects.AbstractObject;
+import spacesettlers.objects.Ship;
+import spacesettlers.objects.powerups.SpaceSettlersPowerupEnum;
+import spacesettlers.objects.resources.ResourcePile;
+import spacesettlers.objects.weapons.AbstractWeapon;
+import spacesettlers.simulator.Toroidal2DPhysics;
+import spacesettlers.utilities.Position;
+import spacesettlers.utilities.Vector2D;
 
-	LibrePD(double krv, double krp, double ktv, double ktp){
-	 /* To be critically damped, the parameters must satisfy:
-	 * 2 * sqrt(Kp) = Kv*/
-		this.krv = krv;
-		this.krp = krp;
-		this.ktv = ktv;
-		this.ktp = ktp;
-	}
+class LibrePD {
+    double krv,krp;
+    double ktv,ktp;
 
-	public RawAction getRawAction(Toroidal2DPhysics space, Position position, Position destination, Position aimPoint){
-		//Calculate position vectors corresponding to out locations
-		Vector2D positionVector = new Vector2D(position);
-		Vector2D destinationVector = new Vector2D(destination);
-		Vector2D aimPointVector = new Vector2D(aimPoint);
+    LibrePD(double krv, double krp, double ktv, double ktp) {
+        /* To be critically damped, the parameters must satisfy:
+        * 2 * sqrt(Kp) = Kv*/
+        this.krv = krv;
+        this.krp = krp;
+        this.ktv = ktv;
+        this.ktp = ktp;
+    }
 
-		double shipVelocityX = position.getTranslationalVelocityX();
-		double shipVelocityY = position.getTranslationalVelocityY();
+    public RawAction getRawAction(Toroidal2DPhysics space, Position position, Position destination, Position aimPoint) {
+        //Calculate position vectors corresponding to out locations
+        Vector2D positionVector = new Vector2D(position);
+        Vector2D destinationVector = new Vector2D(destination);
+        Vector2D aimPointVector = new Vector2D(aimPoint);
 
-		Vector2D shipVelocityVector = new Vector2D(shipVelocityX, shipVelocityY);
+        double shipVelocityX = position.getTranslationalVelocityX();
+        double shipVelocityY = position.getTranslationalVelocityY();
 
-		double aimPointVelocityX = aimPoint.getTranslationalVelocityX();
-		double aimPointVelocityY = aimPoint.getTranslationalVelocityY();
+        Vector2D shipVelocityVector = new Vector2D(shipVelocityX, shipVelocityY);
 
-		Vector2D aimPointVelocityVector = new Vector2D(aimPointVelocityX,aimPointVelocityY);
+        double aimPointVelocityX = aimPoint.getTranslationalVelocityX();
+        double aimPointVelocityY = aimPoint.getTranslationalVelocityY();
 
-		double aimPointAngularVelocity = aimPointVelocityVector.getMagnitude() / 
-							space.findShortestDistanceVector(position,aimPoint).getMagnitude() *
-							Math.sin(aimPointVelocityVector.getAngle() - 
-								positionVector.getAngle());
+        Vector2D aimPointVelocityVector = new Vector2D(aimPointVelocityX,aimPointVelocityY);
 
-		double shipRotationalVelocity = position.getAngularVelocity();							
+        double aimPointAngularVelocity = aimPointVelocityVector.getMagnitude() /
+                                         space.findShortestDistanceVector(position,aimPoint).getMagnitude() *
+                                         Math.sin(aimPointVelocityVector.getAngle() -
+                                                 positionVector.getAngle());
 
-		double aimAngle = space.findShortestDistanceVector(position,aimPoint).getAngle();
+        double shipRotationalVelocity = position.getAngularVelocity();
 
-		double shipAngle = position.getOrientation();
+        double aimAngle = space.findShortestDistanceVector(position,aimPoint).getAngle();
 
-		double angleError = (aimAngle - shipAngle);
+        double shipAngle = position.getOrientation();
 
-		if(angleError > Math.PI){
-			angleError -= 2 * Math.PI;
-		}else if(angleError < -Math.PI){
-			angleError += 2 * Math.PI;
+        double angleError = (aimAngle - shipAngle);
 
-		}
+        if(angleError > Math.PI) {
+            angleError -= 2 * Math.PI;
+        } else if(angleError < -Math.PI) {
+            angleError += 2 * Math.PI;
+
+        }
 
 
-		Vector2D positionError = space.findShortestDistanceVector(position,destination);
+        Vector2D positionError = space.findShortestDistanceVector(position,destination);
 
-		double rotationalAcceleration = 0;
-		Vector2D translationalAcceleration = new Vector2D(0,0);
+        double rotationalAcceleration = 0;
+        Vector2D translationalAcceleration = new Vector2D(0,0);
 
-		rotationalAcceleration = angleError * krp + (aimPointAngularVelocity - shipRotationalVelocity) * krv;
+        rotationalAcceleration = angleError * krp + (aimPointAngularVelocity - shipRotationalVelocity) * krv;
 
-		translationalAcceleration.setX(positionError.getXValue()*ktp + (destination.getTranslationalVelocityX() - shipVelocityX)*ktv);
-		translationalAcceleration.setY(positionError.getYValue()*ktp + (destination.getTranslationalVelocityY() -shipVelocityY)*ktv);
+        translationalAcceleration.setX(positionError.getXValue()*ktp + (destination.getTranslationalVelocityX() - shipVelocityX)*ktv);
+        translationalAcceleration.setY(positionError.getYValue()*ktp + (destination.getTranslationalVelocityY() -shipVelocityY)*ktv);
 
-		RawAction movement = new RawAction(translationalAcceleration,rotationalAcceleration);
+        RawAction movement = new RawAction(translationalAcceleration,rotationalAcceleration);
 
-		return movement;
+        return movement;
 
-	}
+    }
 
 }
 

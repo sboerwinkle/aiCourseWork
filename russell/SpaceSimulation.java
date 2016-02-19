@@ -1,72 +1,55 @@
-~(load "macros.scm")
 
 package brya3525;
 
-~(java-import '(
-	(java
-		(util
-			HashMap
-			HashSet
-			Map
-			Random
-			Set
-			UUID
-			(concurrent
-			 	Callable))
-		 (awt
-			Color))
-	(brya3525
-		TextGraphics
-		Knowledge
-		Prescience)
-	(spacesettlers
-		(actions
-			AbstractAction
-			DoNothingAction
-			MoveAction
-			PurchaseTypes
-			PurchaseCosts)
-		(graphics
-			CircleGraphics
-			SpacewarGraphics)
-		(objects
-			AbstractActionableObject
-			AbstractObject
-			Ship
-			(powerups
-				SpaceSettlersPowerupEnum)
-			(resources
-				ResourcePile)
-			(weapons
-				AbstractWeapon))
-		(simulator
-			Toroidal2DPhysics)
-		(utilities
-			Position)
-		(clients
-		 	ImmutableTeamInfo))))
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.awt.Color;
+import brya3525.TextGraphics;
+import brya3525.Knowledge;
+import brya3525.Prescience;
+import spacesettlers.actions.AbstractAction;
+import spacesettlers.actions.DoNothingAction;
+import spacesettlers.actions.MoveAction;
+import spacesettlers.actions.PurchaseTypes;
+import spacesettlers.actions.PurchaseCosts;
+import spacesettlers.graphics.CircleGraphics;
+import spacesettlers.graphics.SpacewarGraphics;
+import spacesettlers.objects.AbstractActionableObject;
+import spacesettlers.objects.AbstractObject;
+import spacesettlers.objects.Ship;
+import spacesettlers.objects.powerups.SpaceSettlersPowerupEnum;
+import spacesettlers.objects.resources.ResourcePile;
+import spacesettlers.objects.weapons.AbstractWeapon;
+import spacesettlers.simulator.Toroidal2DPhysics;
+import spacesettlers.utilities.Position;
+import spacesettlers.clients.ImmutableTeamInfo;
 
-class SpaceSimulation extends Toroidal2DPhysics implements Callable<SpaceSimulation>{
+class SpaceSimulation extends Toroidal2DPhysics implements Callable<SpaceSimulation> {
 
-	SpaceSimulation(Toroidal2DPhysics space, double timeStep ){
-		super(space.getHeight(),space.getWidth(),timeStep);
-		this.setTeamInfo(new HashSet<ImmutableTeamInfo>(space.getTeamInfo()));
-		
-		for(AbstractObject obj : space.getAllObjects()){
-			AbstractObject newObject = obj.deepClone();
-			this.addObject(newObject);
-		}
-	} 
+    SpaceSimulation(Toroidal2DPhysics space, double timeStep ) {
+        super(space.getHeight(),space.getWidth(),timeStep);
+        this.setTeamInfo(new HashSet<ImmutableTeamInfo>(space.getTeamInfo()));
 
-	public SpaceSimulation call(){
-		Map<UUID, SpaceSettlersPowerupEnum> powerups = new HashMap<UUID, SpaceSettlersPowerupEnum>();
-		try{
-			advanceTime(getCurrentTimestep() + 1, powerups);
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-		return this;
-	}
+        for(AbstractObject obj : space.getAllObjects()) {
+            AbstractObject newObject = obj.deepClone();
+            this.addObject(newObject);
+        }
+    }
+
+    public SpaceSimulation call() {
+        Map<UUID, SpaceSettlersPowerupEnum> powerups = new HashMap<UUID, SpaceSettlersPowerupEnum>();
+        try {
+            advanceTime(getCurrentTimestep() + 1, powerups);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return this;
+    }
 
 }
 
