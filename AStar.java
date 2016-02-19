@@ -16,7 +16,7 @@ class AStar {
 	static final double V1 = Path.CRUISE_SPEED;
 	static final double V2 = V1/S2;
 	static final double[] vxs = {-V2, -V1, -V2,   0,  V2,  V1,  V2,   0};
-	static final double[] vxs = {-V2,   0,  V2,  V1,  V2,   0, -V2, -V1};
+	static final double[] vys = {-V2,   0,  V2,  V1,  V2,   0, -V2, -V1};
 
 	//These variables are used to keep from passing a dozen different values around internally.
 	//I never said this class was thread-safe, and it isn't.
@@ -45,7 +45,7 @@ class AStar {
 
 		Vector2D offset = space.findShortestDistanceVector(destination.getPosition(), origin.getPosition());
 		double dist = offset.getMagnitude();
-		int steps = Math.cieling(dist/(radius*2));
+		int steps = (int)Math.ceil(dist/(radius*2));
 		double timePer = dist/steps/V1;
 		Vector2D vecNorm = offset.divide(steps);
 		Vector2D vecTan = new Vector2D(vecNorm.getYValue(), -vecNorm.getXValue());
@@ -65,16 +65,16 @@ class AStar {
 			int ix = top.ix;
 			if (visited[ix]) continue;
 			parents[ix] = top.parent;
-			if (ix = goalNode) break;
+			if (ix == goalNode) break;
 			visited[ix] = true;
 			int n = ix / width;
 			int t = ix % width - halfWidth;
 			for (int dir = 0; dir < 8; dir++) {
 				int N = n+dxs[dir];
 				int T = t+dys[dir];
-				if (math.abs(T) > halfWidth || N < 0 || N > steps) continue;
+				if (Math.abs(T) > halfWidth || N < 0 || N > steps) continue;
 				if (visited[N*width+T+halfWidth]) continue;
-				if (!stepOkay(space, new Step(top.g, dists[dir]*timePer, new Position(destPos.add(vecNorm.multiply(n)).add(vecTan.multiply(t))), new Vector2D(vxs[dir], vys[dir])))) continue;
+				if (!stepOkay(space, new Step(top.g, dists[dir]*timePer, destPos.add(vecNorm.multiply(n)).add(vecTan.multiply(t)), new Vector2D(vxs[dir], vys[dir])))) continue;
 				//Set things up so N holds displacement along the longer axis, and T along the shorter axis
 				T = Math.abs(T);
 				if (T > N) {
@@ -123,8 +123,8 @@ class AStar {
 		int parent;
 		double g, h;
 		public int compareTo(Node other) {
-			f = g+h;
-			o = other.g+other.h;
+			double f = g+h;
+			double o = other.g+other.h;
 			if (f < o) return -1;
 			if (f > o) return 1;
 			return 0;
