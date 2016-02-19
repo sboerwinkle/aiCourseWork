@@ -49,6 +49,7 @@ class Path {
 	 * Assumes we can accelerate instantly.
 	 */
 	Vector2D getThrust(Toroidal2DPhysics space, Ship me) {
+		//System.out.printf("On waypoint %d/%d\n", numWaypointsCompleted, waypoints.length);
 		if (objectiveID == null) return new Vector2D(0, 0);
 		objective = space.getObjectById(objectiveID);
 		if (!objective.isAlive()) {

@@ -101,6 +101,7 @@ class AStar {
 		Vector2D prev = null;
 		int prevN = 0;
 		int prevT = 0;
+		//boolean needSep = false;
 		for (int n = parents[goalNode]; n != startNode; n = parents[n]) {
 			int N = n/width;
 			int T = n%width - halfWidth;
@@ -114,8 +115,13 @@ class AStar {
 			prevN = N;
 			prevT = T;
 			waypoints[--numNodes] = vecNorm.multiply(N).add(vecTan.multiply(T));
+			/*if (T != 0) {
+				needSep = true;
+				System.out.printf("Added a point with T = %d\n", T);
+			}*/
 		}
-		return new Path(new Vector2D[0], b.getId(), energy, top.g);
+		//if (needSep) System.out.println("End call");
+		return new Path(waypoints, b.getId(), energy, top.g);
 	}
 
 	static class Node implements Comparable<Node> {
@@ -192,7 +198,7 @@ class AStar {
 		startPos = space.findShortestDistanceVector(new Position(s.startPos), new Position(startPos));
 		//Shift velocity into the step's reference frame
 		velocity = velocity.subtract(s.velocity);
-		double radius = AStar.radius + a.getRadius();
+		double myRadius = radius + a.getRadius();
 		Vector2D dir = velocity.unit();
 		double timeToPass;
 		if (velocity.equals(new Vector2D())) {
@@ -204,9 +210,9 @@ class AStar {
 
 		//If it's going to make it's closest approach sometime during this step
 		if (timeToPass >= 0 && timeToPass <= s.duration) {
-			return radius >= Math.abs(startPos.dot(new Vector2D(dir.getYValue(), -dir.getXValue())));
+			return myRadius >= Math.abs(startPos.dot(new Vector2D(dir.getYValue(), -dir.getXValue())));
 		}
 		if (timeToPass > 0) startPos = startPos.add(velocity.multiply(s.duration));
-		return radius >= startPos.getMagnitude();
+		return myRadius >= startPos.getMagnitude();
 	}
 }
