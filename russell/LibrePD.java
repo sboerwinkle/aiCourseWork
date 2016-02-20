@@ -1,6 +1,6 @@
 
 
-package brya3525;
+package barn1474.russell;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,11 +13,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.awt.Color;
-import brya3525.TextGraphics;
-import brya3525.Knowledge;
-import brya3525.Prescience;
-import brya3525.SpaceSimulation;
-import brya3525.LibrePD;
+import barn1474.russell.TextGraphics;
+import barn1474.russell.Knowledge;
+import barn1474.russell.Prescience;
+import barn1474.russell.SpaceSimulation;
+import barn1474.russell.LibrePD;
 import spacesettlers.actions.AbstractAction;
 import spacesettlers.actions.DoNothingAction;
 import spacesettlers.actions.MoveAction;

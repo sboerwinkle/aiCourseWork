@@ -1,5 +1,5 @@
 
-package brya3525;
+package barn1474.russell;
 
 public enum ShipStateEnum {
     GATHERING_ENERGY,

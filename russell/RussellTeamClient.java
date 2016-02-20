@@ -1,5 +1,5 @@
 
-package brya3525;
+package barn1474.russell;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,9 +8,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.awt.Color;
-import brya3525.TextGraphics;
-import brya3525.Knowledge;
-import brya3525.Prescience;
+import barn1474.russell.TextGraphics;
+import barn1474.russell.Knowledge;
+import barn1474.russell.Prescience;
 import spacesettlers.actions.AbstractAction;
 import spacesettlers.actions.DoNothingAction;
 import spacesettlers.actions.MoveAction;
