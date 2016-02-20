@@ -78,7 +78,8 @@ public class myTeamClient extends TeamClient {
 					if ((data.objective == null || data.objective instanceof Base) && ship.getResources().getMass() == 0) {
 						data.timeTilAStar = 0;
 
-						data.objective = data.getNearestAsteroid(space, ship);
+						//data.objective = data.getNearestAsteroid(space, ship);
+						data.objective = data.getNearestBeacon(space, ship);
 						data.objectiveID = data.objective == null ? null : data.objective.getId();
 						//if (objective == null) return;
 					}
