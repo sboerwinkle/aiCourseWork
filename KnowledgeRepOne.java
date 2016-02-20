@@ -1,31 +1,27 @@
 package barn1474;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 
-import spacesettlers.actions.AbstractAction;
-import spacesettlers.actions.DoNothingAction;
-import spacesettlers.actions.RawAction;
-import spacesettlers.actions.PurchaseCosts;
-import spacesettlers.actions.PurchaseTypes;
 import spacesettlers.graphics.SpacewarGraphics;
-import spacesettlers.objects.*;
-import spacesettlers.objects.powerups.SpaceSettlersPowerupEnum;
-import spacesettlers.objects.resources.ResourcePile;
-import spacesettlers.objects.weapons.AbstractWeapon;
+import spacesettlers.objects.AbstractObject;
+import spacesettlers.objects.Asteroid;
+import spacesettlers.objects.Base;
+import spacesettlers.objects.Beacon;
+import spacesettlers.objects.Ship;
 import spacesettlers.simulator.Toroidal2DPhysics;
-import spacesettlers.utilities.Position;
 import spacesettlers.utilities.Vector2D;
-import spacesettlers.clients.TeamClient;
+import barn1474.russell.ShipStateEnum;
 
 class KnowledgeRepOne {
 	
-	private static final int NEAR_BEACON_RADIUS = 50;
-	private static final int LOW_ENERGY = 1000;
+	static final int NEAR_BEACON_RADIUS = 50;
+	static final int LOW_ENERGY = 1000;
+	
+	/**
+	 * A state that tells us what we are doing now
+	 */
+	ShipStateEnum state;
 	
 	/**
 	 * This will either be a mineable asteroid, or the base.
@@ -37,8 +33,17 @@ class KnowledgeRepOne {
 	 * This is an object, so we actually do our calculations with this.
 	 */
 	AbstractObject objective = null;
+	
+	/**
+	 * Holds the solution from navigational searches
+	 */
 	Path path = null;
-
+	
+	
+	/**
+	 * Things to draw on the screen
+	 * @return set of Spacewar Graphics
+	 */
 	HashSet<SpacewarGraphics> getGraphics() {
 		if (path == null) return new HashSet<SpacewarGraphics>();
 		return path.getGraphics();
@@ -158,35 +163,4 @@ class KnowledgeRepOne {
 		return (me.getEnergy() < LOW_ENERGY);
 	}
 	
-	/**
-	 * Updates our objective and target.
-	 * Should be called once per tick.
-	 */
-	void updateKnowledge(Toroidal2DPhysics space, Ship me) {
-		if (path != null && !path.isValid()) path = null;
-		if (path == null) objectiveID = null;
-		objective = objectiveID == null ? null : space.getObjectById(objectiveID);
-		if (objective != null && !objective.isAlive()) {
-			objectiveID = null;
-			objective = null;
-		}
-		//If we have no objective (but do have minerals), head home.
-		if (objective == null) {
-			timeTilAStar = 0;
-			objective = getNearestBase(space, me);
-			objectiveID = objective.getId();
-		}
-		//If he have no resources (And aren't already hunting an asteroid), pick an asteroid to hunt.
-		if ((objective == null || objective instanceof Base) && me.getResources().getMass() == 0) {
-			timeTilAStar = 0;
-
-			objective = getNearestAsteroid(space, me);
-			objectiveID = objective == null ? null : objective.getId();
-			if (objective == null) return;
-		}
-		if (timeTilAStar-- == 0) {
-			timeTilAStar = 10;
-			path = AStar.doAStar(space, me, objective, me);
-		}
-	}
 }

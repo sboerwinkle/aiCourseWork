@@ -3,25 +3,23 @@ package barn1474;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
-import barn1474.KnowledgeRepTwo.shipState;
 import spacesettlers.actions.AbstractAction;
 import spacesettlers.actions.DoNothingAction;
-import spacesettlers.actions.MoveAction;
-import spacesettlers.actions.MoveToObjectAction;
 import spacesettlers.actions.PurchaseCosts;
 import spacesettlers.actions.PurchaseTypes;
 import spacesettlers.actions.RawAction;
 import spacesettlers.clients.TeamClient;
 import spacesettlers.graphics.SpacewarGraphics;
-import spacesettlers.objects.*;
+import spacesettlers.objects.AbstractActionableObject;
+import spacesettlers.objects.AbstractObject;
+import spacesettlers.objects.Base;
+import spacesettlers.objects.Ship;
 import spacesettlers.objects.powerups.SpaceSettlersPowerupEnum;
 import spacesettlers.objects.resources.ResourcePile;
 import spacesettlers.simulator.Toroidal2DPhysics;
-import spacesettlers.utilities.Position;
 import spacesettlers.utilities.Vector2D;
 
 /**
@@ -35,28 +33,12 @@ public class myTeamClient extends TeamClient {
 	HashSet<SpacewarGraphics> myGraphics;
 	private static final double APPROACH_VELOCITY = 1.0;
 
-	boolean useSecondAi;
-
 	HashMap<UUID, KnowledgeRepOne> knowledgeMap = new HashMap<UUID, KnowledgeRepOne>();
 
 	@Override
 	public void initialize(Toroidal2DPhysics space) {
 		myGraphics = new HashSet<SpacewarGraphics>();
-		KnowledgeRepTwo.initializeKnowledge();
-		
-		//Store team name into a static string
-		KnowledgeRepTwo.myTeamName = getTeamName();
-		
-		//initialize list of ships and states
-		KnowledgeRepTwo.myShips = new HashMap<UUID, shipState>();
-		for (Ship s : space.getShips()){
-			if (s.getTeamName().equalsIgnoreCase(KnowledgeRepTwo.myTeamName)){
-				KnowledgeRepTwo.myShips.put(s.getId(),KnowledgeRepTwo.shipState.GETTING_RESOURCES);
-			}
-		}
 
-		//useSecondAi = Math.random() < 0.5;
-		useSecondAi = false;
 	}
 
 	@Override
@@ -69,75 +51,53 @@ public class myTeamClient extends TeamClient {
 		myGraphics.clear();
 
 		for (AbstractObject actionable :  actionableObjects) {
-			if (!(actionable instanceof Ship)) {
-				// it is a base and nobody cares about them, lol
-				myActions.put(actionable.getId(), new DoNothingAction());
-				continue;
-			}
-			Ship ship = (Ship) actionable;
-			if (useSecondAi) {
-				AbstractAction current = ship.getCurrentAction();
-				
-				// change state based on what's going on
-				if (KnowledgeRepTwo.isOutOfGas(ship)) {KnowledgeRepTwo.myShips.put(ship.getId(), KnowledgeRepTwo.shipState.GETTING_GAS);}
-				else if (ship.getResources().getTotal() > 0) {KnowledgeRepTwo.myShips.put(ship.getId(), KnowledgeRepTwo.shipState.GOING_HOME);}
-				else if (ship.getResources().getTotal() == 0) {KnowledgeRepTwo.myShips.put(ship.getId(), KnowledgeRepTwo.shipState.GETTING_RESOURCES);}
-				
-				// if there is bacon really close just get it without changing state
-				if (KnowledgeRepTwo.isBeaconNear(space, ship)){
-					myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), KnowledgeRepTwo.nearBeacon.get(ship.getId()).getPosition(), ship.getPosition().getTranslationalVelocity()));
-				}
-				else { //do something according to what state is guiding us
-					try{
-						switch(KnowledgeRepTwo.myShips.get(ship.getId())){
-						case GETTING_RESOURCES:
-							Asteroid newAsteroid = null;
-							for (Base base : space.getBases()){
-								if (base.getTeamName().equals(getTeamName())){
-									newAsteroid = KnowledgeRepTwo.asteroidNearestBase(space, ship, base);
-									break; //for now only one base
-								}
-							}
-							myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), KnowledgeRepTwo.getObjectIntercept(newAsteroid), newAsteroid.getPosition().getTranslationalVelocity()));
-							/*
-							if (KnowledgeRepTwo.isMineableAsteroidAhead(space, ship)) {
-								myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), KnowledgeRepTwo.getObjectIntercept(KnowledgeRepTwo.mineableAsteroid.get(ship.getId())), KnowledgeRepTwo.mineableAsteroid.get(ship.getId()).getPosition().getTranslationalVelocity()));
-							}
-							else {
-								myActions.put(ship.getId(), current);
-							}*/
-							break;
-						case GETTING_GAS:
-							AbstractObject gas = KnowledgeRepTwo.myNearestRefuel(space, ship);
-							if (gas instanceof Base){ //base needs 0 approach velocity
-								myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), gas.getPosition()));
-							}
-							else { //beacon needs final velocity
-								myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), gas.getPosition(), ship.getPosition().getTranslationalVelocity()));
-							}
-							
-							break;
-						case GOING_HOME:
-							myActions.put(ship.getId(), new MoveAction(space, ship.getPosition(), KnowledgeRepTwo.myNearestBase(space, ship).getPosition()));
-							break;
-						}
-					}
-					catch (NoObjectReturnedException e) {
-							
-						myActions.put(ship.getId(), current);
-					}
-				}
-			} else {
+			if (actionable instanceof Ship) {
+				Ship ship = (Ship) actionable;
+
+				//add any new ships to knowledge map
 				if (!knowledgeMap.containsKey(ship.getId())) {
 					knowledgeMap.put(ship.getId(), new KnowledgeRepOne());
 				}
 				KnowledgeRepOne data = knowledgeMap.get(ship.getId());
-				data.updateKnowledge(space, ship);
+				
+					
+					if (data.path != null && !data.path.isValid()) data.path = null;
+					if (data.path == null) data.objectiveID = null;
+					data.objective = data.objectiveID == null ? null : space.getObjectById(data.objectiveID);
+					if (data.objective != null && !data.objective.isAlive()) {
+						data.objectiveID = null;
+						data.objective = null;
+					}
+					//If we have no objective (but do have minerals), head home.
+					if (data.objective == null) {
+						data.timeTilAStar = 0;
+						data.objective = data.getNearestBase(space, ship);
+						data.objectiveID = data.objective.getId();
+					}
+					//If he have no resources (And aren't already hunting an asteroid), pick an asteroid to hunt.
+					if ((data.objective == null || data.objective instanceof Base) && ship.getResources().getMass() == 0) {
+						data.timeTilAStar = 0;
+
+						data.objective = data.getNearestAsteroid(space, ship);
+						data.objectiveID = data.objective == null ? null : data.objective.getId();
+						//if (objective == null) return;
+					}
+					if (data.timeTilAStar-- == 0) {
+						data.timeTilAStar = 10;
+						data.path = AStar.doAStar(space, ship, data.objective, ship);
+					}
+				
 
 				Vector2D thrust = data.getThrust(space, ship);
 				myGraphics.addAll(data.getGraphics());
 				myActions.put(ship.getId(), new RawAction(thrust, 0));
 			}
+			else {
+				// it is a base and nobody cares about them, lol
+				myActions.put(actionable.getId(), new DoNothingAction());
+			}
+
+			
 		}
 		return myActions;
 	}
@@ -169,15 +129,13 @@ public class myTeamClient extends TeamClient {
 					if (ship.getResources().getMass() == 0) continue;
 					purchases.put(ship.getId(), PurchaseTypes.BASE);
 					// AI #1 needs to reset which base is the target in this event.
-					if (!useSecondAi) {
+
 						if (knowledgeMap.containsKey(ship.getId())) {
 							KnowledgeRepOne data = knowledgeMap.get(ship.getId());
 							data.objectiveID = null;
 							data.objective = null;
 						}
-					} else {
-						//TODO: Does AI #2 need to react at all in this situation?
-					}
+
 					break;
 				}
 			}		
