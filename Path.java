@@ -1,9 +1,14 @@
 package barn1474;
 
+import java.awt.Color;
+
 import java.util.UUID;
+import java.util.HashSet;
 
 import spacesettlers.objects.AbstractObject;
 import spacesettlers.objects.Ship;
+import spacesettlers.graphics.SpacewarGraphics;
+import spacesettlers.graphics.CircleGraphics;
 import spacesettlers.simulator.Toroidal2DPhysics;
 import spacesettlers.utilities.Position;
 import spacesettlers.utilities.Vector2D;
@@ -32,6 +37,15 @@ class Path {
 		energyCost = e;
 		timeCost = t;
 		numWaypointsCompleted = 0;
+	}
+
+	HashSet<SpacewarGraphics> getGraphics() {
+		HashSet<SpacewarGraphics> ret = new HashSet<SpacewarGraphics>();
+		for (int i = numWaypointsCompleted; i < waypoints.length; i++) {
+			ret.add(new CircleGraphics(2, Color.RED, new Position(new Vector2D(objective.getPosition()).add(waypoints[i]))));
+		}
+		ret.add(new CircleGraphics(2, Color.RED, objective.getPosition()));
+		return ret;
 	}
 
 	/**

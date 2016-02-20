@@ -35,6 +35,11 @@ class KnowledgeRepOne {
 	AbstractObject objective = null;
 	Path path = null;
 
+	HashSet<SpacewarGraphics> getGraphics() {
+		if (path == null) return new HashSet<SpacewarGraphics>();
+		return path.getGraphics();
+	}
+
 	int timeTilAStar = 0;
 
 	/**

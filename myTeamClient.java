@@ -32,6 +32,7 @@ import spacesettlers.utilities.Vector2D;
  */
 public class myTeamClient extends TeamClient {
 
+	HashSet<SpacewarGraphics> myGraphics;
 	private static final double APPROACH_VELOCITY = 1.0;
 
 	boolean useSecondAi;
@@ -40,6 +41,7 @@ public class myTeamClient extends TeamClient {
 
 	@Override
 	public void initialize(Toroidal2DPhysics space) {
+		myGraphics = new HashSet<SpacewarGraphics>();
 		KnowledgeRepTwo.initializeKnowledge();
 		
 		//Store team name into a static string
@@ -64,6 +66,7 @@ public class myTeamClient extends TeamClient {
 	public Map<UUID, AbstractAction> getMovementStart(Toroidal2DPhysics space,
 			Set<AbstractActionableObject> actionableObjects) {
 		HashMap<UUID, AbstractAction> myActions = new HashMap<UUID, AbstractAction>();
+		myGraphics.clear();
 
 		for (AbstractObject actionable :  actionableObjects) {
 			if (!(actionable instanceof Ship)) {
@@ -132,6 +135,7 @@ public class myTeamClient extends TeamClient {
 				data.updateKnowledge(space, ship);
 
 				Vector2D thrust = data.getThrust(space, ship);
+				myGraphics.addAll(data.getGraphics());
 				myActions.put(ship.getId(), new RawAction(thrust, 0));
 			}
 		}
@@ -143,7 +147,7 @@ public class myTeamClient extends TeamClient {
 
 	@Override
 	public Set<SpacewarGraphics> getGraphics() {
-		return new HashSet<SpacewarGraphics>();
+		return new HashSet<SpacewarGraphics>(myGraphics);
 	}
 
 

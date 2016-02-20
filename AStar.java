@@ -45,7 +45,7 @@ class AStar {
 
 		Vector2D offset = space.findShortestDistanceVector(destination.getPosition(), origin.getPosition());
 		double dist = offset.getMagnitude();
-		int steps = (int)Math.ceil(dist/(radius*2));
+		int steps = (int)Math.ceil(dist/(5));
 		double timePer = dist/steps/V1;
 		Vector2D vecNorm = offset.divide(steps);
 		Vector2D vecTan = new Vector2D(vecNorm.getYValue(), -vecNorm.getXValue());
@@ -75,17 +75,17 @@ class AStar {
 				if (Math.abs(T) > halfWidth || N < 0 || N > steps) continue;
 				if (visited[N*width+T+halfWidth]) continue;
 				if (!stepOkay(space, new Step(top.g, dists[dir]*timePer, destPos.add(vecNorm.multiply(n)).add(vecTan.multiply(t)), new Vector2D(vxs[dir], vys[dir])))) continue;
-				//Set things up so N holds displacement along the longer axis, and T along the shorter axis
-				T = Math.abs(T);
-				if (T > N) {
-					int tmp = T;
-					T = N;
-					N = tmp;
+				//Set things up so A holds displacement along the longer axis, and B along the shorter axis
+				int B = Math.abs(T);
+				int A = N;
+				if (B > A) {
+					A = B;
+					B = N;
 				}
 				//Change it so N is now axis-aligned displacement, and T is 45-degree displacement
-				N -= T;
+				A -= B;
 				//Use these values to compute h(n) for the new node
-				q.add(new Node(N*width+T+halfWidth, ix, top.g+dists[dir]*timePer, (N+S2*T)*timePer));
+				q.add(new Node(N*width+T+halfWidth, ix, top.g+dists[dir]*timePer, (A+S2*B)*timePer));
 			}
 		}
 		//Once over to compute number of nodes in path
