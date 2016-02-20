@@ -9,7 +9,7 @@
 	<teamColorBlue>250</teamColorBlue>
 	
 	<!-- The name that shows up in the ladder -->
-	<ladderName>White Boerwinklenett Riders</ladderName>
+	<ladderName>BBB (Boerwinkle, Bryan, and Barnett)</ladderName>
 	
 	<!-- The number of ships in the team.  Note, if this is bigger than the maximum number of allowable ships per team, it is ignored -->
 	<numberInitialShipsInTeam>1</numberInitialShipsInTeam>
