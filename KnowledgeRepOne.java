@@ -16,6 +16,7 @@ import barn1474.russell.ShipStateEnum;
 class KnowledgeRepOne {
 	
 	static final int NEAR_BEACON_RADIUS = 50;
+	static final int NEAR_ASTEROID_RADIUS = 50;
 	static final int LOW_ENERGY = 1000;
 	
 	/**
@@ -130,6 +131,22 @@ class KnowledgeRepOne {
 	boolean isBeaconNear(Toroidal2DPhysics space, Ship me) {
 		for (Beacon b : space.getBeacons()){
 			if (space.findShortestDistance(b.getPosition(), me.getPosition()) < NEAR_BEACON_RADIUS) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Check if there are resources within a specified radius
+	 * @param space
+	 * @param ship
+	 * @return true if there is at least one beacon in our radius, false otherwise
+	 */
+	boolean isResourceNear(Toroidal2DPhysics space, Ship me) {
+		for (Asteroid a : space.getAsteroids()){
+			if (a.isMineable() &&
+					space.findShortestDistance(a.getPosition(), me.getPosition()) < NEAR_ASTEROID_RADIUS) {
 				return true;
 			}
 		}
