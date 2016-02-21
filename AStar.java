@@ -18,6 +18,8 @@ class AStar {
 	static final double[] vxs = {-V2, -V1, -V2,   0,  V2,  V1,  V2,   0};
 	static final double[] vys = {-V2,   0,  V2,  V1,  V2,   0, -V2, -V1};
 
+	static final int STEP_SIZE = 10;
+	
 	//These variables are used to keep from passing a dozen different values around internally.
 	//I never said this class was thread-safe, and it isn't.
 	//So stop your whining, and think of them as instance variables.
@@ -45,7 +47,7 @@ class AStar {
 
 		Vector2D offset = space.findShortestDistanceVector(destination.getPosition(), origin.getPosition());
 		double dist = offset.getMagnitude();
-		int steps = (int)Math.ceil(dist/(5));
+		int steps = (int)Math.ceil(dist/(STEP_SIZE));
 		double timePer = dist/steps/V1;
 		Vector2D vecNorm = offset.divide(steps);
 		Vector2D vecTan = new Vector2D(vecNorm.getYValue(), -vecNorm.getXValue());
