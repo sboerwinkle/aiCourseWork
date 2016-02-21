@@ -1,6 +1,7 @@
 package barn1474;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.UUID;
 
 import spacesettlers.graphics.SpacewarGraphics;
@@ -22,23 +23,35 @@ class KnowledgeRepOne {
 	/**
 	 * A state that tells us what we are doing now
 	 */
-	ShipStateEnum state;
+	private ShipStateEnum state;
 	
 	/**
 	 * This will either be a mineable asteroid, or the base.
 	 * This is a UUID, so it's persistent.
 	 */
-	UUID objectiveID = null;
+	private UUID objectiveID = null;
 	/**
 	 * The object corresponding to objectiveID.
 	 * This is an object, so we actually do our calculations with this.
 	 */
-	AbstractObject objective = null;
+	private AbstractObject objective = null;
 	
 	/**
-	 * Holds the solution from navigational searches
+	 * Holds the solution from navigational searches for current objective
 	 */
-	Path path = null;
+	private Path path = null;
+	
+	/**
+	 * Holds higher level list of objectives
+	 */
+	private LinkedList<AbstractObject> objectiveList;
+	
+	/**
+	 * Constructor
+	 */
+	public KnowledgeRepOne(){
+		objectiveList = new LinkedList<AbstractObject>();
+	}
 	
 	
 	/**
@@ -53,7 +66,7 @@ class KnowledgeRepOne {
 	/**
 	 * Counter for when to do replans
 	 */
-	int timeTilAStar = 0;
+	private int timeTilAStar = 0;
 
 	/**
 	 * Gives the thrust vector to head towards the target.
@@ -212,16 +225,27 @@ class KnowledgeRepOne {
 		return objectiveID;
 	}
 	
-	public void setObjectiveID(UUID objectiveID) {
-		this.objectiveID = objectiveID;
-	}
-	
 	public AbstractObject getObjective() {
 		return objective;
 	}
 	
 	public void setObjective(AbstractObject objective) {
 		this.objective = objective;
+		objectiveID = (objectiveID == null ? null : objective.getId());
+	}
+	
+	public void update(Toroidal2DPhysics space){
+		if (path != null && !path.isValid()) path = null;
+		if (path == null) {
+			setObjective(null);
+		}
+		else {
+			setObjective(space.getObjectById(objectiveID));
+		}
+		
+		if (objective != null && !objective.isAlive()) {
+			setObjective(null);
+		}
 	}
 	
 	public Path getPath() {
@@ -239,4 +263,34 @@ class KnowledgeRepOne {
 	public void setTimeTilAStar(int timeTilAStar) {
 		this.timeTilAStar = timeTilAStar;
 	}
+	
+	public void decrementTimeTilAStar(){
+		this.timeTilAStar--;
+	}
+
+
+	public AbstractObject popNextObjective() {
+		return objectiveList.pollFirst();
+	}
+	
+	public AbstractObject peekFinalObjective() {
+		return objectiveList.getLast();
+	}
+	
+	/**
+	 * Checks the list of objects to visit to see if any of them is not alive
+	 * @return false if isAlive==true for all objects in the list 
+	 */
+	public boolean hasDeadObjective() {
+		for (AbstractObject obj : objectiveList){
+			if (!obj.isAlive()) return true;
+		}
+		return false;
+	}
+
+
+	public void setObjectiveList(LinkedList<AbstractObject> objectiveList) {
+		this.objectiveList = objectiveList;
+	}
+	
 }
