@@ -123,6 +123,25 @@ class KnowledgeRepOne {
 	}
 	
 	/**
+	 * Find the farthest beacon
+	 * @param space
+	 * @param me
+	 * @return The beacon nearest to my ship, or null if there are none
+	 */
+	Beacon getFarthestBeacon(Toroidal2DPhysics space, Ship me) {
+		double bestDist = Double.MIN_VALUE;
+		Beacon bestbeacon = null;
+		for (Beacon b : space.getBeacons()){
+			double dist = space.findShortestDistance(b.getPosition(), me.getPosition());
+			if (dist < bestDist) continue;
+			
+			bestbeacon = b;
+			bestDist = dist;
+		}
+		return bestbeacon;
+	}
+	
+	/**
 	 * Check if there is a beacon within a specified radius
 	 * @param space
 	 * @param ship
@@ -179,5 +198,45 @@ class KnowledgeRepOne {
 	boolean isEnergyLow(Ship me){
 		return (me.getEnergy() < LOW_ENERGY);
 	}
+
+	// Getters and setters
+	public ShipStateEnum getState() {
+		return state;
+	}
 	
+	public void setState(ShipStateEnum state) {
+		this.state = state;
+	}
+	
+	public UUID getObjectiveID() {
+		return objectiveID;
+	}
+	
+	public void setObjectiveID(UUID objectiveID) {
+		this.objectiveID = objectiveID;
+	}
+	
+	public AbstractObject getObjective() {
+		return objective;
+	}
+	
+	public void setObjective(AbstractObject objective) {
+		this.objective = objective;
+	}
+	
+	public Path getPath() {
+		return path;
+	}
+	
+	public void setPath(Path path) {
+		this.path = path;
+	}
+	
+	public int getTimeTilAStar() {
+		return timeTilAStar;
+	}
+	
+	public void setTimeTilAStar(int timeTilAStar) {
+		this.timeTilAStar = timeTilAStar;
+	}
 }
