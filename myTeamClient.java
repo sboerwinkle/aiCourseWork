@@ -16,11 +16,13 @@ import spacesettlers.graphics.SpacewarGraphics;
 import spacesettlers.objects.AbstractActionableObject;
 import spacesettlers.objects.AbstractObject;
 import spacesettlers.objects.Base;
+import spacesettlers.objects.Beacon;
 import spacesettlers.objects.Ship;
 import spacesettlers.objects.powerups.SpaceSettlersPowerupEnum;
 import spacesettlers.objects.resources.ResourcePile;
 import spacesettlers.simulator.Toroidal2DPhysics;
 import spacesettlers.utilities.Vector2D;
+import barn1474.russell.ShipStateEnum;
 
 /**
  * Cooperative agents grab resources and bring them home.
@@ -30,23 +32,29 @@ import spacesettlers.utilities.Vector2D;
  */
 public class myTeamClient extends TeamClient {
 
+	//Initial state for ships. In project 2 we are searching for beacons. 
+	private static final ShipStateEnum INITIAL_STATE = ShipStateEnum.GATHERING_ENERGY;  
+	
+	private static final int ASTAR_INTERVAL = 10;
+	
 	HashSet<SpacewarGraphics> myGraphics;
 	private static final double APPROACH_VELOCITY = 1.0;
 
-	HashMap<UUID, KnowledgeRepOne> knowledgeMap = new HashMap<UUID, KnowledgeRepOne>();
+	HashMap<UUID, KnowledgeRepOne> knowledgeMap;
 
 	@Override
 	public void initialize(Toroidal2DPhysics space) {
 		myGraphics = new HashSet<SpacewarGraphics>();
-
+		knowledgeMap = new HashMap<UUID, KnowledgeRepOne>();
 	}
 
 	@Override
-	public void shutDown(Toroidal2DPhysics space) {}
+	public void shutDown(Toroidal2DPhysics space) {} 
 
 	@Override
 	public Map<UUID, AbstractAction> getMovementStart(Toroidal2DPhysics space,
 			Set<AbstractActionableObject> actionableObjects) {
+		
 		HashMap<UUID, AbstractAction> myActions = new HashMap<UUID, AbstractAction>();
 		myGraphics.clear();
 
@@ -57,41 +65,73 @@ public class myTeamClient extends TeamClient {
 				//add any new ships to knowledge map
 				if (!knowledgeMap.containsKey(ship.getId())) {
 					knowledgeMap.put(ship.getId(), new KnowledgeRepOne());
+					knowledgeMap.get(ship.getId()).setState(INITIAL_STATE);
 				}
 				KnowledgeRepOne data = knowledgeMap.get(ship.getId());
 				
+				//first set the state of the ship accordingly
+				
+				
+				
+				//update info in case path was nullified
+				data.update(space);
+				
+				
+				//do we need to replan any main objectives?
+				if (!data.isObjectiveListValid()){
 					
-					if (data.path != null && !data.path.isValid()) data.path = null;
-					if (data.path == null) data.objectiveID = null;
-					data.objective = data.objectiveID == null ? null : space.getObjectById(data.objectiveID);
-					if (data.objective != null && !data.objective.isAlive()) {
-						data.objectiveID = null;
-						data.objective = null;
+					switch(data.getState()) {
+					case DELIVERING_RESOURCES:
+						//choose the closest base for now
+						Base myBase = data.getNearestBase(space, ship);
+						//now select objects between here and there to visi
+						data.setObjectiveList(NavigationObjects.getObjectsToVisit(space, ship, myBase));
+						break;
+					case GATHERING_ENERGY:
+						//main case for this project
+						//choose the beacon farthest away as the final destination.
+						Beacon beacon = data.getNearestBeacon(space, ship);
+						//now select objects between here and there to visit
+						data.setObjectiveList(NavigationObjects.getObjectsToVisit(space, ship, beacon));
+						break;
+					case GATHERING_RESOURCES:
+						break;
+					default:
+						break;
 					}
-					//If we have no objective (but do have minerals), head home.
-					if (data.objective == null) {
-						data.timeTilAStar = 0;
-						data.objective = data.getNearestBase(space, ship);
-						data.objectiveID = data.objective.getId();
-					}
-					//If he have no resources (And aren't already hunting an asteroid), pick an asteroid to hunt.
-					if ((data.objective == null || data.objective instanceof Base) && ship.getResources().getMass() == 0) {
-						data.timeTilAStar = 0;
 
-						//data.objective = data.getNearestAsteroid(space, ship);
-						data.objective = data.getNearestBeacon(space, ship);
-						data.objectiveID = data.objective == null ? null : data.objective.getId();
-						//if (objective == null) return;
-					}
-					if (data.timeTilAStar-- == 0) {
-						data.timeTilAStar = 10;
-						data.path = AStar.doAStar(space, ship, data.objective, ship);
-					}
+				
+				}
+				
+				//do we need to set the next local objective?
+				
+				//If we have no objective (but do have minerals), head home.
+				if (data.getObjective() == null) {
+					data.setTimeTilAStar(0);
+					data.setObjective(data.getNearestBase(space, ship));
+				}
+				//If he have no resources (And aren't already hunting an asteroid), pick an asteroid to hunt.
+				if ((data.getObjective() == null || data.getObjective() instanceof Base) && ship.getResources().getMass() == 0) {
+					data.setTimeTilAStar(0);
+
+					//data.objective = data.getNearestAsteroid(space, ship);
+					data.setObjective(data.getNearestBeacon(space, ship));
+					//if (objective == null) return;
+				}
+				
+				//the navigational A Star is done once every so many ticks
+				if (data.getTimeTilAStar() == 0) {
+					data.setTimeTilAStar(ASTAR_INTERVAL);
+					data.setPath(AStar.doAStar(space, ship, data.getObjective(), ship));
+				}
+				data.decrementTimeTilAStar();
 				
 
+				//thrust gets the low level where to go next
 				Vector2D thrust = data.getThrust(space, ship);
-				myGraphics.addAll(data.getGraphics());
 				myActions.put(ship.getId(), new RawAction(thrust, 0));
+				myGraphics.addAll(data.getGraphics());
+				myGraphics.addAll(data.getNavGraphics(space, ship));
 			}
 			else {
 				// it is a base and nobody cares about them, lol
@@ -133,8 +173,7 @@ public class myTeamClient extends TeamClient {
 
 						if (knowledgeMap.containsKey(ship.getId())) {
 							KnowledgeRepOne data = knowledgeMap.get(ship.getId());
-							data.objectiveID = null;
-							data.objective = null;
+							data.setObjective(null);
 						}
 
 					break;

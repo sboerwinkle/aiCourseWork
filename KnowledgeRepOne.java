@@ -1,9 +1,11 @@
 package barn1474;
 
+import java.awt.Color;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.UUID;
 
+import spacesettlers.graphics.LineGraphics;
 import spacesettlers.graphics.SpacewarGraphics;
 import spacesettlers.objects.AbstractObject;
 import spacesettlers.objects.Asteroid;
@@ -13,6 +15,7 @@ import spacesettlers.objects.Ship;
 import spacesettlers.simulator.Toroidal2DPhysics;
 import spacesettlers.utilities.Vector2D;
 import barn1474.russell.ShipStateEnum;
+import barn1474.russell.TextGraphics;
 
 class KnowledgeRepOne {
 	
@@ -235,6 +238,7 @@ class KnowledgeRepOne {
 	}
 	
 	public void update(Toroidal2DPhysics space){
+		//check for nulls in immediate path goal
 		if (path != null && !path.isValid()) path = null;
 		if (path == null) {
 			setObjective(null);
@@ -246,6 +250,13 @@ class KnowledgeRepOne {
 		if (objective != null && !objective.isAlive()) {
 			setObjective(null);
 		}
+		
+		//need to refresh the main objectives list
+		LinkedList<AbstractObject> refreshList = new LinkedList<AbstractObject>();
+		for (AbstractObject obj : objectiveList){
+			refreshList.addLast(space.getObjectById(obj.getId()));
+		}
+		setObjectiveList(refreshList);
 	}
 	
 	public Path getPath() {
@@ -279,18 +290,37 @@ class KnowledgeRepOne {
 	
 	/**
 	 * Checks the list of objects to visit to see if any of them is not alive
-	 * @return false if isAlive==true for all objects in the list 
+	 * @return should return false if list is empty, or if any object in the list is null or not alive 
 	 */
-	public boolean hasDeadObjective() {
+	public boolean isObjectiveListValid() {
+		if (objectiveList.isEmpty()) return false;
 		for (AbstractObject obj : objectiveList){
-			if (!obj.isAlive()) return true;
+			if (obj == null || !obj.isAlive()) return false;
 		}
-		return false;
+		return true;
 	}
 
 
 	public void setObjectiveList(LinkedList<AbstractObject> objectiveList) {
+		this.objectiveList.clear();
 		this.objectiveList = objectiveList;
+	}
+	
+	HashSet<SpacewarGraphics> getNavGraphics(Toroidal2DPhysics space, Ship me) {
+		HashSet<SpacewarGraphics> ret = new HashSet<SpacewarGraphics>();
+		AbstractObject prevObj = me; //start drawing from the ship
+		int i = 0;
+		for (AbstractObject nextObj : objectiveList) {
+			
+			TextGraphics text = new TextGraphics(i + "", nextObj.getPosition(), Color.WHITE);
+			LineGraphics line = new LineGraphics(prevObj.getPosition(), nextObj.getPosition(), space.findShortestDistanceVector(prevObj.getPosition(), nextObj.getPosition()));
+			line.setLineColor(Color.RED);
+			ret.add(line);
+			ret.add(text);
+			prevObj = nextObj;
+			i++;
+		}
+		return ret;
 	}
 	
 }

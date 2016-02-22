@@ -1,5 +1,6 @@
 package barn1474;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 
 import spacesettlers.objects.AbstractObject;
@@ -15,6 +16,11 @@ import spacesettlers.simulator.Toroidal2DPhysics;
  *
  */
 public class NavigationObjects {
+	
+	private static final int MAX_DEPTH = 3;
+	
+	//we are going to need a persistent list of objects so we can subtract from it as we go
+	static HashSet<AbstractObject> candidateObjects;
 
 	/**
 	 * Makes the high level decision of which objects to visit. Uses a greedy best first search
@@ -27,13 +33,25 @@ public class NavigationObjects {
 	public static LinkedList<AbstractObject> getObjectsToVisit(Toroidal2DPhysics space, Ship me, AbstractObject finalObjective){
 
 		LinkedList<AbstractObject> objectsList = new LinkedList<AbstractObject>();
+		candidateObjects = new HashSet<AbstractObject>();
 		AbstractObject nextObjective = finalObjective;
+		
+		//set up the objects to search through
+		for (Beacon beacon : space.getBeacons()){
+			candidateObjects.add(beacon);
+		}
+		for (Asteroid asteroid : space.getAsteroids()){
+			if (!asteroid.isMineable()) continue;
+			candidateObjects.add(asteroid);
+		}
 		
 		//add the endpoint of our search so it will be the end of the list
 		objectsList.addFirst(finalObjective);
 		
+		if (candidateObjects.contains(finalObjective)) candidateObjects.remove(finalObjective);
+		
 		//keep adding new objects, using greedy best search until we are done
-		while(true){
+		for (int i = MAX_DEPTH; i > 0; i--){
 			nextObjective = findNextObject(space, me, nextObjective);
 			//check when to stop search
 			if (nextObjective == null
@@ -42,6 +60,7 @@ public class NavigationObjects {
 				break;
 			}
 			objectsList.addFirst(nextObjective);
+			candidateObjects.remove(nextObjective);
 		}
 		
 		return objectsList;
@@ -61,22 +80,18 @@ public class NavigationObjects {
 		AbstractObject bestObject = null;
 		
 		//we are looking for beacons and mineable asteroids
-		for (Beacon beacon : space.getBeacons()){
-			dist = sumOfDistances(space, me, beacon, finalObjective); 
+		for (AbstractObject obj : candidateObjects){
+			dist = sumOfDistances(space, me, obj, finalObjective); 
 			if (dist > bestDist) continue;
 			bestDist = dist;
-			bestObject = beacon;
+			bestObject = obj;
 		}
-		for (Asteroid asteroid : space.getAsteroids()){
-			if (!asteroid.isMineable()) continue;
-			dist = sumOfDistances(space, me, asteroid, finalObjective);
-			if (dist > bestDist) continue;
-			bestDist = dist;
-			bestObject = asteroid;
-			
-			
-		}
+
 		return bestObject;
+	}
+	
+	static boolean sameThing(AbstractObject a, AbstractObject b) {
+		return a.getId().equals(b.getId());
 	}
 	
 	/**
@@ -91,4 +106,5 @@ public class NavigationObjects {
 	public static double sumOfDistances(Toroidal2DPhysics space, AbstractObject start, AbstractObject middle, AbstractObject end){
 		return space.findShortestDistance(start.getPosition(), middle.getPosition()) + space.findShortestDistance(middle.getPosition(), end.getPosition());
 	}
+	
 }
