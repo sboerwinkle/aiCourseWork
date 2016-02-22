@@ -1,6 +1,7 @@
 package barn1474;
 
 import spacesettlers.objects.*;
+import spacesettlers.objects.weapons.AbstractWeapon;
 import spacesettlers.simulator.Toroidal2DPhysics;
 import spacesettlers.utilities.Position;
 import spacesettlers.utilities.Vector2D;
@@ -185,6 +186,9 @@ class AStar {
 			if (sameThing(a, origin)) continue;
 			if (sameThing(a, destination)) continue;
 			if (sameThing(a, me)) continue;
+			if (thingOccludesStep(space, a, s)) return false;
+		}
+		for (AbstractWeapon a : space.getWeapons()) {
 			if (thingOccludesStep(space, a, s)) return false;
 		}
 		return true;
