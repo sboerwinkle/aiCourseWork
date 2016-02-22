@@ -13,6 +13,7 @@ import spacesettlers.objects.Base;
 import spacesettlers.objects.Beacon;
 import spacesettlers.objects.Ship;
 import spacesettlers.simulator.Toroidal2DPhysics;
+import spacesettlers.utilities.Position;
 import spacesettlers.utilities.Vector2D;
 import barn1474.russell.ShipStateEnum;
 import barn1474.russell.TextGraphics;
@@ -293,7 +294,7 @@ class KnowledgeRepOne {
 	 * @return should return false if list is empty, or if any object in the list is null or not alive 
 	 */
 	public boolean isObjectiveListValid() {
-		if (objectiveList.isEmpty()) return false;
+		if (objectiveList.isEmpty() && objective == null) return false; //even if the list is empty, the last objective could be stored as the immediate
 		for (AbstractObject obj : objectiveList){
 			if (obj == null || !obj.isAlive()) return false;
 		}
@@ -328,6 +329,7 @@ class KnowledgeRepOne {
 			prevObj = nextObj;
 			
 		}
+		
 		return ret;
 	}
 	
