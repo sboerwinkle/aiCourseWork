@@ -234,7 +234,7 @@ class KnowledgeRepOne {
 	
 	public void setObjective(AbstractObject objective) {
 		this.objective = objective;
-		objectiveID = (objectiveID == null ? null : objective.getId());
+		objectiveID = (objective == null ? null : objective.getId());
 	}
 	
 	public void update(Toroidal2DPhysics space){
@@ -308,17 +308,25 @@ class KnowledgeRepOne {
 	
 	HashSet<SpacewarGraphics> getNavGraphics(Toroidal2DPhysics space, Ship me) {
 		HashSet<SpacewarGraphics> ret = new HashSet<SpacewarGraphics>();
-		AbstractObject prevObj = me; //start drawing from the ship
-		int i = 0;
+		
+		//draw from the ship to the immediate objective
+		int i =0;
+		TextGraphics text = new TextGraphics(i + "", objective.getPosition(), Color.WHITE);
+		LineGraphics line = new LineGraphics(me.getPosition(), objective.getPosition(), space.findShortestDistanceVector(me.getPosition(), objective.getPosition()));
+		line.setLineColor(Color.RED);
+		ret.add(line);
+		ret.add(text);
+
+		AbstractObject prevObj = objective; // now start drawing from the immediate objective
 		for (AbstractObject nextObj : objectiveList) {
-			
-			TextGraphics text = new TextGraphics(i + "", nextObj.getPosition(), Color.WHITE);
-			LineGraphics line = new LineGraphics(prevObj.getPosition(), nextObj.getPosition(), space.findShortestDistanceVector(prevObj.getPosition(), nextObj.getPosition()));
+			i++;
+			text = new TextGraphics(i + "", nextObj.getPosition(), Color.WHITE);
+			line = new LineGraphics(prevObj.getPosition(), nextObj.getPosition(), space.findShortestDistanceVector(prevObj.getPosition(), nextObj.getPosition()));
 			line.setLineColor(Color.RED);
 			ret.add(line);
 			ret.add(text);
 			prevObj = nextObj;
-			i++;
+			
 		}
 		return ret;
 	}

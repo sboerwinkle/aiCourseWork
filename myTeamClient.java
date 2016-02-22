@@ -104,19 +104,9 @@ public class myTeamClient extends TeamClient {
 				}
 				
 				//do we need to set the next local objective?
-				
-				//If we have no objective (but do have minerals), head home.
 				if (data.getObjective() == null) {
 					data.setTimeTilAStar(0);
-					data.setObjective(data.getNearestBase(space, ship));
-				}
-				//If he have no resources (And aren't already hunting an asteroid), pick an asteroid to hunt.
-				if ((data.getObjective() == null || data.getObjective() instanceof Base) && ship.getResources().getMass() == 0) {
-					data.setTimeTilAStar(0);
-
-					//data.objective = data.getNearestAsteroid(space, ship);
-					data.setObjective(data.getNearestBeacon(space, ship));
-					//if (objective == null) return;
+					data.setObjective(data.popNextObjective());
 				}
 				
 				//the navigational A Star is done once every so many ticks

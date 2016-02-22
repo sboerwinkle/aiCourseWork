@@ -55,8 +55,8 @@ public class NavigationObjects {
 			nextObjective = findNextObject(space, me, nextObjective);
 			//check when to stop search
 			if (nextObjective == null
-					//don't go for objects outside of the radius from me to final objective
-					|| space.findShortestDistance(me.getPosition(), nextObjective.getPosition()) > space.findShortestDistance(me.getPosition(), finalObjective.getPosition())){
+					//don't go for objects outside of the radius from final object to me
+					|| space.findShortestDistance(finalObjective.getPosition(), nextObjective.getPosition()) > space.findShortestDistance(me.getPosition(), finalObjective.getPosition())){
 				break;
 			}
 			objectsList.addFirst(nextObjective);
