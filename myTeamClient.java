@@ -1,8 +1,8 @@
 package barn1474;
 
-import java.awt.Color;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -16,16 +16,15 @@ import spacesettlers.clients.TeamClient;
 import spacesettlers.graphics.SpacewarGraphics;
 import spacesettlers.objects.AbstractActionableObject;
 import spacesettlers.objects.AbstractObject;
+import spacesettlers.objects.Asteroid;
 import spacesettlers.objects.Base;
 import spacesettlers.objects.Beacon;
 import spacesettlers.objects.Ship;
 import spacesettlers.objects.powerups.SpaceSettlersPowerupEnum;
 import spacesettlers.objects.resources.ResourcePile;
 import spacesettlers.simulator.Toroidal2DPhysics;
-import spacesettlers.utilities.Position;
 import spacesettlers.utilities.Vector2D;
 import barn1474.russell.ShipStateEnum;
-import barn1474.russell.TextGraphics;
 
 /**
  * Cooperative agents grab resources and bring them home.
@@ -39,7 +38,8 @@ public class myTeamClient extends TeamClient {
 	private static final ShipStateEnum INITIAL_STATE = ShipStateEnum.GATHERING_ENERGY;  
 	
 	private static final int ASTAR_INTERVAL = 10;
-	private static final int SHIP_MASS_FULL = 500;
+	private static final int SHIP_FULL = 1500;
+	private static final int END_OF_TIME = 1000;
 	
 	HashSet<SpacewarGraphics> myGraphics;
 	private static final double APPROACH_VELOCITY = 1.0;
@@ -77,12 +77,16 @@ public class myTeamClient extends TeamClient {
 				ShipStateEnum oldState = data.getState();
 				
 				//first set the state of the ship accordingly
-				if(ship.getMass() > SHIP_MASS_FULL) {
+				if(space.getMaxTime() - space.getCurrentTimestep() < END_OF_TIME){
+					data.setState(ShipStateEnum.GATHERING_RESOURCES);
+				}
+				else if(ship.getResources().getTotal() > SHIP_FULL) {
 					data.setState(ShipStateEnum.DELIVERING_RESOURCES);
 				}
 				else {
 					data.setState(ShipStateEnum.GATHERING_ENERGY);
 				}
+				
 				
 				if (oldState != data.getState()) {
 					data.setObjective(null);
@@ -92,8 +96,9 @@ public class myTeamClient extends TeamClient {
 				data.update(space);
 				
 				//for debugging
-				myGraphics.add(new TextGraphics("State: " + data.getState(), new Position(10.0, 10.0), Color.WHITE));
-				myGraphics.add(new TextGraphics("Mass: " + ship.getMass(), new Position(10.0, 20.0), Color.WHITE));
+				//myGraphics.add(new TextGraphics("State: " + data.getState(), new Position(10.0, 10.0), Color.WHITE));
+				//myGraphics.add(new TextGraphics("Mass: " + ship.getMass(), new Position(10.0, 20.0), Color.WHITE));
+				//myGraphics.add(new TextGraphics("Resources: " + ship.getResources().getTotal(), new Position(10.0, 30.0), Color.WHITE));
 				
 				//do we need to replan any main objectives?
 				if (!data.isObjectiveListValid()){
@@ -107,12 +112,22 @@ public class myTeamClient extends TeamClient {
 						break;
 					case GATHERING_ENERGY:
 						//main case for this project
-						//choose the beacon farthest away as the final destination.
+						//choose the closest beacon as the final destination.
 						Beacon beacon = data.getNearestBeacon(space, ship);
 						//now select objects between here and there to visit
 						data.setObjectiveList(NavigationObjects.getObjectsToVisit(space, ship, beacon));
 						break;
 					case GATHERING_RESOURCES:
+						//if we're in this mode it's because time is running short
+						//just go back and forth between resources and home
+						Asteroid asteroid = data.getNearestAsteroid(space, ship);
+						Base mybase = data.getNearestBase(space, ship);
+						LinkedList<AbstractObject> list = new LinkedList<AbstractObject>();
+						if (asteroid != null){
+							list.addFirst(mybase);
+							list.addFirst(asteroid);
+						}
+						data.setObjectiveList(list);
 						break;
 					default:
 						break;
@@ -122,7 +137,7 @@ public class myTeamClient extends TeamClient {
 				}
 				
 				//do we need to set the next local objective?
-				if (data.getObjective() == null) {
+				if (data.getObjective() == null || (data.getObjective() instanceof Base && ship.getResources().getTotal() == 0)) {
 					data.setTimeTilAStar(0);
 					data.setObjective(data.popNextObjective());
 				}
