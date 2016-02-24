@@ -22,7 +22,7 @@ class KnowledgeRepOne {
 	
 	static final int NEAR_BEACON_RADIUS = 50;
 	static final int NEAR_ASTEROID_RADIUS = 50;
-	static final int LOW_ENERGY = 1000;
+	static final int LOW_ENERGY = 2500;
 	
 	/**
 	 * A state that tells us what we are doing now
@@ -238,6 +238,11 @@ class KnowledgeRepOne {
 		objectiveID = (objective == null ? null : objective.getId());
 	}
 	
+	/**
+	 * Checks for nullified path in the navigation, and updates the pointers to the
+	 * objects that form the intermediate goals
+	 * @param space
+	 */
 	public void update(Toroidal2DPhysics space){
 		//check for nulls in immediate path goal
 		if (path != null && !path.isValid()) path = null;
@@ -272,6 +277,10 @@ class KnowledgeRepOne {
 		return timeTilAStar;
 	}
 	
+	/**
+	 * Sets the countdown timer for A Star navigation replan
+	 * @param timeTilAStar
+	 */
 	public void setTimeTilAStar(int timeTilAStar) {
 		this.timeTilAStar = timeTilAStar;
 	}
@@ -280,11 +289,26 @@ class KnowledgeRepOne {
 		this.timeTilAStar--;
 	}
 
-
+	/**
+	 * Add a single object to the top of the objectives list.
+	 * @param objective
+	 */
+	public void pushObjective(AbstractObject objective){
+		objectiveList.push(objective);
+	}
+	
+	/**
+	 * Pops the next objective off the objectives list
+	 * @return the next objective
+	 */
 	public AbstractObject popNextObjective() {
 		return objectiveList.pollFirst();
 	}
-	
+
+	/**
+	 * A way to check what the final objective is in the list
+	 * @return the final objective
+	 */
 	public AbstractObject peekFinalObjective() {
 		return objectiveList.getLast();
 	}
@@ -302,11 +326,21 @@ class KnowledgeRepOne {
 	}
 
 
+	/**
+	 * For importing a list of objectives that will be sequential goals for the navigation system
+	 * @param objectiveList
+	 */
 	public void setObjectiveList(LinkedList<AbstractObject> objectiveList) {
 		this.objectiveList.clear();
 		this.objectiveList = objectiveList;
 	}
 	
+	/**
+	 * Helpful graphics for debugging navigation algorithms
+	 * @param space
+	 * @param me
+	 * @return
+	 */
 	HashSet<SpacewarGraphics> getNavGraphics(Toroidal2DPhysics space, Ship me) {
 		HashSet<SpacewarGraphics> ret = new HashSet<SpacewarGraphics>();
 		
