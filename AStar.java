@@ -8,17 +8,22 @@ import spacesettlers.utilities.Vector2D;
 import java.util.PriorityQueue;
 
 class AStar {
-	static final double SQRT2 = Math.sqrt(2);
-
+	//Definition of the 8 directions, in terms of Displacement X and Displacement Y
 	static final int[] dxs = {-1, -1, -1,  0,  1,  1,  1,  0};
 	static final int[] dys = {-1,  0,  1,  1,  1,  0, -1, -1};
+	//sqrt(2)
 	static final double S2 = 1.4142;
+	//How long each cardinal direction is
 	static final double[] dists = {S2, 1, S2, 1, S2, 1, S2, 1};
+	//How fast we move in each dimension when going N, S, E, W
 	static final double V1 = Path.CRUISE_SPEED;
+	//How fast we move in each dimension when going at a 45 deg angle
 	static final double V2 = V1/S2;
+	//Velocity vectors for each of the 8 directions
 	static final double[] vxs = {-V2, -V1, -V2,   0,  V2,  V1,  V2,   0};
 	static final double[] vys = {-V2,   0,  V2,  V1,  V2,   0, -V2, -V1};
 
+	//How many units are between the grid points
 	static final int STEP_SIZE = 10;
 	
 	//These variables are used to keep from passing a dozen different values around internally.
@@ -48,7 +53,7 @@ class AStar {
 
 		Vector2D offset = space.findShortestDistanceVector(destination.getPosition(), origin.getPosition());
 		double dist = offset.getMagnitude();
-		int steps = (int)Math.ceil(dist/(STEP_SIZE));
+		int steps = (int)Math.ceil(dist/STEP_SIZE);
 		double timePer = dist/steps/V1;
 		Vector2D vecNorm = offset.divide(steps);
 		Vector2D vecTan = new Vector2D(vecNorm.getYValue(), -vecNorm.getXValue());
@@ -173,6 +178,7 @@ class AStar {
 
 	static boolean stepOkay(Toroidal2DPhysics space, Step s) {
 		for (Asteroid a : space.getAsteroids()) {
+			if (a.isMineable()) continue; // Collisions with mineable asteroids are happy accidents
 			if (sameThing(a, origin)) continue;
 			if (sameThing(a, destination)) continue;
 			if (thingOccludesStep(space, a, s)) return false;
