@@ -54,34 +54,43 @@ class AStar {
 		Vector2D offset = space.findShortestDistanceVector(destination.getPosition(), origin.getPosition());
 		double dist = offset.getMagnitude();
 		int steps = (int)Math.ceil(dist/STEP_SIZE);
+		//How long it takes the ship to travel one grid space
 		double timePer = dist/steps/V1;
+		//Vector for one grid square towards the ship from the target
 		Vector2D vecNorm = offset.divide(steps);
+		//Vector for one grid square sideways
 		Vector2D vecTan = new Vector2D(vecNorm.getYValue(), -vecNorm.getXValue());
+		//The constructed grid is roughly half as wide as it is long.
 		int halfWidth = (steps+2)/4;
 		int width = 2*halfWidth+1;
 		int numNodes = width*(steps+1);
 		int startNode = numNodes-1-halfWidth;
 		int goalNode = halfWidth;
+		//parents[n] is the parent of node #n
 		int[] parents = new int[numNodes];
+		//Whether node #n has been visited
 		boolean[] visited = new boolean[numNodes];
+		//Queue for A*
 		PriorityQueue<Node> q = new PriorityQueue<Node>();
 		q.add(new Node(startNode, -1, 0, steps*timePer));
 		Node top;
 		while (true) {
 			top = q.poll();
 			if (top == null) return null;
-			int ix = top.ix;
-			if (visited[ix]) continue;
-			parents[ix] = top.parent;
-			if (ix == goalNode) break;
-			visited[ix] = true;
-			int n = ix / width;
-			int t = ix % width - halfWidth;
+			int index = top.index;
+			if (visited[index]) continue;
+			parents[index] = top.parent;
+			if (index == goalNode) break;
+			visited[index] = true;
+			//n and t are the two grid coordinates
+			int n = index / width;
+			int t = index % width - halfWidth;
 			for (int dir = 0; dir < 8; dir++) {
 				int N = n+dxs[dir];
 				int T = t+dys[dir];
 				if (Math.abs(T) > halfWidth || N < 0 || N > steps) continue;
 				if (visited[N*width+T+halfWidth]) continue;
+				//Check to make sure no obstacles would get in the way of this step
 				if (!stepOkay(space, new Step(top.g, dists[dir]*timePer, destPos.add(vecNorm.multiply(n)).add(vecTan.multiply(t)), new Vector2D(vxs[dir], vys[dir])))) continue;
 				//Set things up so A holds displacement along the longer axis, and B along the shorter axis
 				int B = Math.abs(T);
@@ -93,7 +102,8 @@ class AStar {
 				//Change it so N is now axis-aligned displacement, and T is 45-degree displacement
 				A -= B;
 				//Use these values to compute h(n) for the new node
-				q.add(new Node(N*width+T+halfWidth, ix, top.g+dists[dir]*timePer, (A+S2*B)*timePer));
+				q.add(new Node(N*width+T+halfWidth, index, top.g+dists[dir]*timePer, (A+S2*B)*timePer));
+				             /* Node index,       parent,         g(n),                 h(n) */
 			}
 		}
 		//Once over to compute number of nodes in path
@@ -110,6 +120,7 @@ class AStar {
 		int prevN = 0;
 		int prevT = 0;
 		//boolean needSep = false;
+		//Iterate backwards through path using the parent array
 		for (int n = parents[goalNode]; n != startNode; n = parents[n]) {
 			int N = n/width;
 			int T = n%width - halfWidth;
@@ -122,6 +133,7 @@ class AStar {
 			prev = direction;
 			prevN = N;
 			prevT = T;
+			//Compute a displacement from the objective given the grid coordinates
 			waypoints[--numNodes] = vecNorm.multiply(N).add(vecTan.multiply(T));
 			/*if (T != 0) {
 				needSep = true;
@@ -133,7 +145,7 @@ class AStar {
 	}
 
 	static class Node implements Comparable<Node> {
-		int ix;
+		int index;
 		int parent;
 		double g, h;
 		public int compareTo(Node other) {
@@ -144,7 +156,7 @@ class AStar {
 			return 0;
 		}
 		Node(int i, int p, double G, double H) {
-			ix = i;
+			index = i;
 			parent = p;
 			g = G;
 			h = H;
@@ -176,6 +188,9 @@ class AStar {
 		return a.getId().equals(b.getId());
 	}
 
+	/**
+	 * @return true iff nothing would block the path of 'me' as it travels along Step s
+	 */
 	static boolean stepOkay(Toroidal2DPhysics space, Step s) {
 		for (Asteroid a : space.getAsteroids()) {
 			if (a.isMineable()) continue; // Collisions with mineable asteroids are happy accidents

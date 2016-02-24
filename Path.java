@@ -15,11 +15,14 @@ import spacesettlers.utilities.Vector2D;
 
 class Path {
 	static final double CRUISE_SPEED = 50;
+	//How close we have to be before we say we've hit a point
 	static final double DIST_EPSILON = 5;
 
 	int numWaypointsCompleted;
 	Vector2D[] waypoints;
+	//Persistent storage of objective
 	UUID objectiveID;
+	//Calculated from objectiveID approx. once per tick
 	AbstractObject objective;
 	/**
 	 * An estimate, calculated by AStar.
@@ -39,6 +42,7 @@ class Path {
 		numWaypointsCompleted = 0;
 	}
 
+	//Puts one red circle per waypoint left to complete
 	HashSet<SpacewarGraphics> getGraphics() {
 		HashSet<SpacewarGraphics> ret = new HashSet<SpacewarGraphics>();
 		for (int i = numWaypointsCompleted; i < waypoints.length; i++) {
@@ -73,7 +77,7 @@ class Path {
 		}
 
 		Vector2D vec = space.findShortestDistanceVector(me.getPosition(), getCurrentWaypoint());
-		if (vec.getMagnitude() < DIST_EPSILON) {
+		if (vec.getMagnitude() < DIST_EPSILON) { // Time to progress to the next waypoint
 			if (numWaypointsCompleted == waypoints.length) {
 				//Invalidate if we've reached the end.
 				objectiveID = null;
