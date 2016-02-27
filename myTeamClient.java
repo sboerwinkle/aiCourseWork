@@ -37,13 +37,22 @@ public class myTeamClient extends TeamClient {
 	//Initial state for ships. In project 2 we are searching for beacons. 
 	private static final ShipStateEnum INITIAL_STATE = ShipStateEnum.GATHERING_ENERGY;  
 	
+	//how many timesteps to set the A-star replan counter to
 	private static final int ASTAR_INTERVAL = 10;
+	
+	//amount of gathered resources it takes for the ship to head home
 	private static final int SHIP_FULL = 1500;
+	
+	//the number of timesteps at the end of the game that should be used for frantic
+	//last minute gathering of resources
 	private static final int END_OF_TIME = 1000;
 	
 	HashSet<SpacewarGraphics> myGraphics;
 	private static final double APPROACH_VELOCITY = 1.0;
 
+	/**
+	 * Map of ship UUID to its knowledge representation
+	 */
 	HashMap<UUID, KnowledgeRepOne> knowledgeMap;
 
 	@Override

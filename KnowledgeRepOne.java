@@ -30,7 +30,7 @@ class KnowledgeRepOne {
 	private ShipStateEnum state;
 	
 	/**
-	 * This will either be a mineable asteroid, or the base.
+	 * This will either be a beacon (project2), or the base.
 	 * This is a UUID, so it's persistent.
 	 */
 	private UUID objectiveID = null;
@@ -68,7 +68,7 @@ class KnowledgeRepOne {
 	}
 
 	/**
-	 * Counter for when to do replans
+	 * Counter for when to do replanning
 	 */
 	private int timeTilAStar = 0;
 

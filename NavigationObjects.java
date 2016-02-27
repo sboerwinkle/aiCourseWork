@@ -91,6 +91,12 @@ public class NavigationObjects {
 		return bestObject;
 	}
 	
+	/**
+	 * Simple equivalence test for spacewar objects using UUID
+	 * @param a
+	 * @param b
+	 * @return
+	 */
 	static boolean sameThing(AbstractObject a, AbstractObject b) {
 		return a.getId().equals(b.getId());
 	}
