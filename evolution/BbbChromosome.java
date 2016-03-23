@@ -6,12 +6,10 @@ public class BbbChromosome {
 
 	static private double mutationFactor = 1.1;
 	public static final int geneSize = 4;
-	//private static double lowerGeneBound = .01;
-	//private static double upperGeneBound = 4.0;
 	private double[] genes;
 
 	//5.29,7,0.8,0.16
-	private double[] newGeneSeeds = {5.29,7.0,0.8,0.16};
+	private static final double[] newGeneSeeds = {5.29,7.0,0.8,0.16};
 	
 	
 	/**
