@@ -90,6 +90,21 @@ public class BbbPopulation {
 	}
 	
 	/**
+	 * Returns individuals in order from population.
+	 * If there are no more to return, the next population
+	 * is automatically generated and its first individual is returned.
+	 * @return an individual from the population
+	 */
+	public BbbIndividual getNextIndividual(){
+		if (populationIndex == individuals.size()){
+			//time for next generation
+			nextGeneration();
+			populationIndex = 0;
+		}
+		return individuals.get(populationIndex++);
+	}
+	
+	/**
 	 * Tell how many individuals are in the population
 	 * @return integer size
 	 */
@@ -118,24 +133,22 @@ public class BbbPopulation {
 	public void nextGeneration(){
 		//sort so we can do by rank
 		Collections.sort(individuals);
-		System.out.println("Sorted");
-		System.out.println(this);
+
 		//truncate the population so we only take the top best
 		while(individuals.size() > populationCap){
 			individuals.remove(populationCap);
 		}
-		System.out.println("Truncated");
-		System.out.println(this);
+
 		//perform crossover
 		doCrossover();
-		System.out.println("Crossover");
-		System.out.println(this);
+
 		//mutate
 		for (BbbIndividual i : individuals){
 			i.getChromosome().mutate();
+			//the fitness of this chromosome has not been measured yet
+			i.setFitness(-1);
 		}
-		System.out.println("Mutated");
-		System.out.println(this);
+
 	}
 	
 	@Override
