@@ -3,13 +3,11 @@ package barn1474.evolution;
 import java.util.Random;
 
 /**
- * Class for storing a chromosome and its fitness
+ * Class for storing a chromosome and its fitness together
  * @author barnett
  *
  */
-public class BbbIndividual {
-
-	static private double mutationFactor = 1.1;
+public class BbbIndividual implements Comparable<BbbIndividual>{
 	
 	private BbbChromosome chromosome;
 	private double fitness;
@@ -21,19 +19,6 @@ public class BbbIndividual {
 		super();
 		chromosome = new BbbChromosome(chrome);
 		fitness = -1;
-	}
-	
-	/**
-	 * Change some genes with some randomness
-	 */
-	public void mutate(){
-		Random rand = new Random();
-		//get randomly which gene to change
-		int g = rand.nextInt(4);
-		//change the gene by the mutation factor
-		double newGene = chromosome.getGene(g) * mutationFactor;
-		chromosome.setGene(g, newGene);
-		
 	}
 	
 	
@@ -48,6 +33,16 @@ public class BbbIndividual {
 	}
 	public void setFitness(double fitness) {
 		this.fitness = fitness;
+	}
+
+
+	/**
+	 * Comparison of individuals is based on fitness
+	 */
+	@Override
+	public int compareTo(BbbIndividual other) {
+		if (this.fitness == other.fitness) return 0;
+		return this.fitness > other.fitness ? 1 : -1;
 	}
 	
 	

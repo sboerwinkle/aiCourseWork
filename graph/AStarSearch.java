@@ -3,7 +3,7 @@ package barn1474.graph;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 
-import barn1474.NoObjectReturnedException;
+import bbbExceptions.NoObjectReturnedException;
 
 public class AStarSearch <G extends Graph<? extends GraphVertex<? extends Object>>> {
 

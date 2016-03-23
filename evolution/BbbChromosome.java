@@ -4,6 +4,7 @@ import java.util.Random;
 
 public class BbbChromosome {
 
+	static private double mutationFactor = 1.1;
 	private static int geneSize = 4;
 	private static double lowerGeneBound = .01;
 	private static double upperGeneBound = 4.0;
@@ -46,6 +47,33 @@ public class BbbChromosome {
 	 */
 	public BbbChromosome(BbbChromosome other){
 		this(other.getGene(0), other.getGene(1), other.getGene(2), other.getGene(3));
+	}
+	
+	/**
+	 * Mutation: pick one random gene and change it
+	 * by a random, scaled, Gaussian distributed term
+	 */
+	public void mutate(){
+		Random rand = new Random();
+		//get randomly which gene to change
+		int g = rand.nextInt(geneSize);
+		//use Gaussian random to mutate
+		double noise = rand.nextGaussian();
+		genes[g] = genes[g] + noise * mutationFactor;
+		
+	}
+	
+	public void crossover(BbbChromosome otherChrome){
+		Random rand = new Random();
+		//get random crossover point
+		int g = rand.nextInt(geneSize - 1);
+		//swap genes up to crossover
+		double temp;
+		for (int i = 0; i <= g; i++){
+			temp = genes[i];
+			genes[i] = otherChrome.genes[i];
+			otherChrome.genes[i] = temp;
+		}
 	}
 	
 	/**
