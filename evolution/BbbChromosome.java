@@ -6,11 +6,13 @@ public class BbbChromosome {
 
 	static private double mutationFactor = 1.1;
 	public static final int geneSize = 4;
-	private static double lowerGeneBound = .01;
-	private static double upperGeneBound = 4.0;
+	//private static double lowerGeneBound = .01;
+	//private static double upperGeneBound = 4.0;
 	private double[] genes;
 
 	//5.29,7,0.8,0.16
+	private double[] newGeneSeeds = {5.29,7.0,0.8,0.16};
+	
 	
 	/**
 	 * Default constructor initializes a random gene
@@ -19,10 +21,9 @@ public class BbbChromosome {
 		super();
 		genes = new double[geneSize];
 		Random rand = new Random();
-		genes[0] = rand.nextDouble() * (upperGeneBound - lowerGeneBound) + lowerGeneBound;
-		genes[1] = rand.nextDouble() * (upperGeneBound - lowerGeneBound) + lowerGeneBound;
-		genes[2] = rand.nextDouble() * (upperGeneBound - lowerGeneBound) + lowerGeneBound;
-		genes[3] = rand.nextDouble() * (upperGeneBound - lowerGeneBound) + lowerGeneBound;
+		for (int j = 0; j < BbbChromosome.geneSize; j++){
+			genes[j] = newGeneSeeds[j] + rand.nextGaussian() * newGeneSeeds[j] / 10.0;
+		}
 
 	}
 	
