@@ -5,7 +5,7 @@ import java.util.Random;
 public class BbbChromosome {
 
 	static private double mutationFactor = 1.1;
-	private static int geneSize = 4;
+	public static final int geneSize = 4;
 	private static double lowerGeneBound = .01;
 	private static double upperGeneBound = 4.0;
 	private double[] genes;
@@ -94,6 +94,23 @@ public class BbbChromosome {
 	public void setGene(int gindex, double val){
 		if (gindex < 0 || gindex >= geneSize) throw new IndexOutOfBoundsException();
 		genes[gindex] = val;
+	}
+	
+	@Override
+	public String toString(){
+		String out = "[";
+		boolean comma = false;
+		for(int i = 0; i < geneSize; i++){
+			if (!comma) {
+				comma = true;
+			}
+			else {
+				out = out + ", ";
+			}
+			out = out + String.format("%f", genes[i]); 
+		}
+		out = out + "]";
+		return out;
 	}
 	
 }

@@ -13,7 +13,16 @@ public class BbbIndividual implements Comparable<BbbIndividual>{
 	private double fitness;
 	
 	/**
-	 * Constructor
+	 * Default constructor uses random chromosome
+	 */
+	public BbbIndividual(){
+		super();
+		chromosome = new BbbChromosome();
+		fitness = -1;
+	}
+	
+	/**
+	 * Constructor to specify chromosome
 	 */
 	public BbbIndividual(BbbChromosome chrome){
 		super();
@@ -45,7 +54,10 @@ public class BbbIndividual implements Comparable<BbbIndividual>{
 		return this.fitness > other.fitness ? 1 : -1;
 	}
 	
-	
+	@Override
+	public String toString(){
+		return "CHROM:" + chromosome + " FIT:" + String.format("%f",fitness);
+	}
 	
 	
 }
