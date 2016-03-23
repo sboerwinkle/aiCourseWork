@@ -1,5 +1,6 @@
 package barn1474;
 
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -24,6 +25,8 @@ import spacesettlers.objects.powerups.SpaceSettlersPowerupEnum;
 import spacesettlers.objects.resources.ResourcePile;
 import spacesettlers.simulator.Toroidal2DPhysics;
 import spacesettlers.utilities.Vector2D;
+import barn1474.evolution.BbbIndividual;
+import barn1474.evolution.BbbPopulation;
 import barn1474.russell.ShipStateEnum;
 
 /**
@@ -55,14 +58,32 @@ public class myTeamClient extends TeamClient {
 	 */
 	HashMap<UUID, KnowledgeRepOne> knowledgeMap;
 
+	/**
+	 * Manages the population for genetic learning.
+	 */
+	BbbPopulation population;
+	
 	@Override
 	public void initialize(Toroidal2DPhysics space) {
 		myGraphics = new HashSet<SpacewarGraphics>();
 		knowledgeMap = new HashMap<UUID, KnowledgeRepOne>();
+		population = new BbbPopulation();
+		try {
+			population.readFromFile(getKnowledgeFile());
+		} catch (FileNotFoundException e) {
+			// then just make some random ones
+			BbbIndividual id;
+			for (int j = 0; j < 50; j++){
+				id = new BbbIndividual();
+				population.add(id);
+			}
+		}
 	}
 
 	@Override
-	public void shutDown(Toroidal2DPhysics space) {} 
+	public void shutDown(Toroidal2DPhysics space) {
+		population.writeToFile(getKnowledgeFile());
+	} 
 
 	@Override
 	public Map<UUID, AbstractAction> getMovementStart(Toroidal2DPhysics space,
