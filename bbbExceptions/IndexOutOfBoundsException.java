@@ -1,4 +1,4 @@
-package bbbExceptions;
+package barn1474.bbbExceptions;
 /**
  * A very simple exception class that can be used for
  * exception handling
