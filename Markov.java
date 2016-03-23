@@ -57,6 +57,14 @@ public class Markov {
 	 * @param caution Less than 1, windows will narrow over time even if the parameter has no effect on score. Over 1, windows will widen unless there is good evidence that the parameter effects score
 	 */
 	public Markov(double f, int s, double[] parameterSpaceMins, double[] parameterSpaceMaxs, String kf, double caution) {
+		init(f, s, parameterSpaceMins, parameterSpaceMaxs, kf, caution);
+	}
+
+	public Markov(double[] pSpaceMins, double[] pSpaceMaxs, String kf) {
+		init(0.8, 100, pSpaceMins, pSpaceMaxs, kf, 0.99);
+	}
+
+	void init(double f, int s, double[] parameterSpaceMins, double[] parameterSpaceMaxs, String kf, double caution) {
 		reqdFraction = f;
 		sampleSize = s;
 		numPars = parameterSpaceMins.length;
@@ -72,6 +80,7 @@ public class Markov {
 		this.caution = caution;
 		rand = new Random();
 	}
+
 
 	void printArray(double[] a) {
 		System.out.printf("{%.2f", a[0]);
