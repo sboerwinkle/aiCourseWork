@@ -10,6 +10,8 @@ public class BbbChromosome {
 	private static double upperGeneBound = 4.0;
 	private double[] genes;
 
+	//5.29,7,0.8,0.16
+	
 	/**
 	 * Default constructor initializes a random gene
 	 */

@@ -25,20 +25,12 @@ public class BbbPopulation {
 		populationIndex = 0;
 	}
 	
-	/**
-	 * Constructor that reads data in from file
-	 * @param fileName
-	 */
-	public BbbPopulation(String fileName){
-		this();
-		readFromFile(fileName);
-	}
 	
 	/**
 	 * Read in csv and recreate list of individuals
 	 * @param fileName
 	 */
-	public void readFromFile(String fileName){
+	public void readFromFile(String fileName)throws FileNotFoundException{
 		// we could start with a blank list or just append
 		//individuals.clear();
 		String input;
@@ -56,13 +48,12 @@ public class BbbPopulation {
 						Double.valueOf(vals[3])
 						));
 				ind.setFitness(Double.valueOf(vals[4]));
+				individuals.add(ind);
 			}
-			
 			
 			buffR.close();
 		} catch (FileNotFoundException e) {
-			// file not found
-			e.printStackTrace();
+			throw new FileNotFoundException();
 		} catch (IOException e){
 			//problem closing file
 		}
