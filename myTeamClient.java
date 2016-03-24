@@ -78,10 +78,15 @@ public class myTeamClient extends TeamClient {
 				population.add(id);
 			}
 		}
+		//load chromosomes into ships
+		
 	}
 
 	@Override
 	public void shutDown(Toroidal2DPhysics space) {
+		//make sure to evaluate the individuals
+		
+		//then save
 		population.writeToFile(getKnowledgeFile());
 	} 
 

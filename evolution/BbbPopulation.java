@@ -38,6 +38,9 @@ public class BbbPopulation {
 		BbbIndividual ind;
 		try {
 			BufferedReader buffR = new BufferedReader(new FileReader(fileName));
+			//first line should be index
+			input = buffR.readLine();
+			populationIndex = Integer.valueOf(input);
 			while (buffR.ready()){
 				input = buffR.readLine();
 				vals = input.split(",");
@@ -68,6 +71,9 @@ public class BbbPopulation {
 	public void writeToFile(String fileName){
 		try {
 			FileWriter fw = new FileWriter(fileName);
+			//write index first
+			fw.append(populationIndex + "\n");
+			//now write all chromosomes
 			for (BbbIndividual i : individuals){
 				for (int j = 0; j < BbbChromosome.geneSize; j++){
 					fw.append("" + i.getChromosome().getGene(j));
