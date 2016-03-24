@@ -189,10 +189,6 @@ class Prescience extends Thread {
         Position aimPoint = null;
         Position goal = null;
         AbstractObject goalObject = null;
-        /* To be critically damped, the parameters must satisfy:
-        * 2 * sqrt(Kp) = Kv*/
-        LibrePD pdController = new LibrePD(5.29,7,0.8,0.16);
-
 
         state = workingShipStates.get(ship.getId());
 
@@ -203,6 +199,16 @@ class Prescience extends Thread {
         }
 
         currentShipState = state.getState();
+
+        /* To be critically damped, the parameters must satisfy:
+        * 2 * sqrt(Kp) = Kv*/
+
+	double krv = currentShipState.getGenome().getChromosome().getGene(0);
+	double krp = currentShipState.getGenome().getChromosome().getGene(1);
+
+	//Initialize with zeros for the lateral movement because we don't care
+        LibrePD pdController = new LibrePD(krv,krp,0,0);
+
 
         switch(currentShipState) {
         case GATHERING_ENERGY:
@@ -242,7 +248,7 @@ class Prescience extends Thread {
 
         movement = pdController.getRawAction(space,ship.getPosition(),goal,aimPoint);
 
-        return movement;
+        return new RawAction(thrust,movement.getMovement(space,ship).getAngularAcceleration());
     }
 
 
@@ -344,6 +350,9 @@ class Prescience extends Thread {
                     }
                 }
 
+		double angularShotLimit = currentShipState.getGenome().getChromosome().getGene(2);
+		double intersectionTimeLimit = currentShipState.getGenome().getChromosome().getGene(3);
+
                 if(aimPoint != null && state.getShooting() && knowledgeUpdates - lastShotTick > 1) {
 
                     boolean shoot = false;
@@ -357,10 +366,10 @@ class Prescience extends Thread {
                     if((
                                 Math.abs((shipPosition.getOrientation() -
                                           aimVector.getAngle()))
-                                * aimDistance < Ship.SHIP_RADIUS) &&
+                                * aimDistance < angularShotLimit) &&
                             (
                                 Math.abs(aimDistance/Missile.INITIAL_VELOCITY/space.getTimestep() - SIMULATION_TIMESTEP_SCALING_FACTOR - knowledgeUpdates %
-                                         SIMULATION_TIMESTEP_SCALING_FACTOR) < 5
+                                         SIMULATION_TIMESTEP_SCALING_FACTOR) < intersectionTimeLimit
                             )) {
                         shoot = true;
                     }
