@@ -19,6 +19,7 @@ import barn1474.russell.SpaceSimulation;
 import barn1474.russell.LibrePD;
 import barn1474.russell.ShipStateEnum;
 import barn1474.russell.ShipState;
+import barn1474.KnowledgeRepOne;
 import spacesettlers.actions.AbstractAction;
 import spacesettlers.actions.DoNothingAction;
 import spacesettlers.actions.MoveAction;
@@ -203,8 +204,8 @@ class Prescience extends Thread {
         /* To be critically damped, the parameters must satisfy:
         * 2 * sqrt(Kp) = Kv*/
 
-	double krv = currentShipState.getGenome().getChromosome().getGene(0);
-	double krp = currentShipState.getGenome().getChromosome().getGene(1);
+	double krv = state.getGenome().getChromosome().getGene(0);
+	double krp = state.getGenome().getChromosome().getGene(1);
 
 	//Initialize with zeros for the lateral movement because we don't care
         LibrePD pdController = new LibrePD(krv,krp,0,0);
@@ -248,7 +249,7 @@ class Prescience extends Thread {
 
         movement = pdController.getRawAction(space,ship.getPosition(),goal,aimPoint);
 
-        return new RawAction(thrust,movement.getMovement(space,ship).getAngularAcceleration());
+        return new RawAction(thrust,movement.getMovement(space,ship).getAngularAccleration());
     }
 
 

@@ -19,7 +19,7 @@ import spacesettlers.utilities.Vector2D;
 import barn1474.russell.ShipStateEnum;
 import barn1474.russell.TextGraphics;
 
-class KnowledgeRepOne {
+public class KnowledgeRepOne {
 	
 	static final int NEAR_BEACON_RADIUS = 50;
 	static final int NEAR_ASTEROID_RADIUS = 50;
