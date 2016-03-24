@@ -1,6 +1,7 @@
 package barn1474;
 
 import java.awt.Color;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.UUID;
@@ -23,6 +24,115 @@ class KnowledgeRepOne {
 	static final int NEAR_BEACON_RADIUS = 50;
 	static final int NEAR_ASTEROID_RADIUS = 50;
 	static final int LOW_ENERGY = 2500;
+
+	//Initial state for ships. In project 2 we are searching for beacons. 
+	private static final ShipStateEnum INITIAL_STATE = ShipStateEnum.GATHERING_ENERGY;  
+	
+	//how many timesteps to set the A-star replan counter to
+	private static final int ASTAR_INTERVAL = 10;
+	
+	//amount of gathered resources it takes for the ship to head home
+	private static final int SHIP_FULL = 1000;
+	
+	//the number of timesteps at the end of the game that should be used for frantic
+	//last minute gathering of resources
+	private static final int END_OF_TIME = 1000;
+	
+	private static final double APPROACH_VELOCITY = 1.0;
+
+	static HashMap<UUID, KnowledgeRepOne> knowledgeMap = new HashMap<UUID, KnowledgeRepOne>();
+
+	public static KnowledgeRepOne get(Ship ship) {
+		return knowledgeMap.get(ship.getId());
+	}
+
+	public static Vector2D doStepGetThrust(Ship ship, Toroidal2DPhysics space) {
+		//add any new ships to knowledge map
+		if (!knowledgeMap.containsKey(ship.getId())) {
+			knowledgeMap.put(ship.getId(), new KnowledgeRepOne());
+			knowledgeMap.get(ship.getId()).setState(INITIAL_STATE);
+		}
+		KnowledgeRepOne data = knowledgeMap.get(ship.getId());
+		
+		//store the old state so we can force a replan if it changes
+		ShipStateEnum oldState = data.getState();
+		
+		//first set the state of the ship accordingly
+		if(space.getMaxTime() - space.getCurrentTimestep() < END_OF_TIME){
+			data.setState(ShipStateEnum.GATHERING_RESOURCES);
+		}
+		else if(ship.getResources().getTotal() > SHIP_FULL) {
+			data.setState(ShipStateEnum.DELIVERING_RESOURCES);
+		}
+		else {
+			data.setState(ShipStateEnum.GATHERING_ENERGY);
+		}
+		
+		
+		if (oldState != data.getState()) {
+			data.setObjective(null);
+		}
+		
+		//update info in case path was nullified
+		data.update(space);
+		
+		//for debugging
+		//myGraphics.add(new TextGraphics("State: " + data.getState(), new Position(10.0, 10.0), Color.WHITE));
+		//myGraphics.add(new TextGraphics("Mass: " + ship.getMass(), new Position(10.0, 20.0), Color.WHITE));
+		//myGraphics.add(new TextGraphics("Resources: " + ship.getResources().getTotal(), new Position(10.0, 30.0), Color.WHITE));
+		
+		//do we need to replan any main objectives?
+		if (!data.isObjectiveListValid()){
+			
+			switch(data.getState()) {
+			case DELIVERING_RESOURCES:
+				//choose the closest base for now
+				Base myBase = data.getNearestBase(space, ship);
+				//now select objects between here and there to visit
+				data.setObjectiveList(NavigationObjects.getObjectsToVisit(space, ship, myBase));
+				break;
+			case GATHERING_ENERGY:
+				//main case for this project
+				//choose the closest beacon as the final destination.
+				Beacon beacon = data.getNearestBeacon(space, ship);
+				//now select objects between here and there to visit
+				data.setObjectiveList(NavigationObjects.getObjectsToVisit(space, ship, beacon));
+				break;
+			case GATHERING_RESOURCES:
+				//if we're in this mode it's because time is running short
+				//just go back and forth between resources and home
+				Asteroid asteroid = data.getNearestAsteroid(space, ship);
+				Base mybase = data.getNearestBase(space, ship);
+				LinkedList<AbstractObject> list = new LinkedList<AbstractObject>();
+				if (asteroid != null){
+					list.addFirst(mybase);
+					list.addFirst(asteroid);
+				}
+				data.setObjectiveList(list);
+				break;
+			default:
+				break;
+			}
+
+		
+		}
+		
+		//do we need to set the next local objective?
+		if (data.getObjective() == null || (data.getObjective() instanceof Base && ship.getResources().getTotal() == 0)) {
+			data.setTimeTilAStar(0);
+			data.setObjective(data.popNextObjective());
+		}
+		
+		//the navigational A Star is done once every so many ticks
+		if (data.getTimeTilAStar() == 0) {
+			data.setTimeTilAStar(ASTAR_INTERVAL);
+			data.setPath(AStar.doAStar(space, ship, data.getObjective(), ship));
+		}
+		data.decrementTimeTilAStar();
+
+		//thrust gets the low level where to go next
+		return data.getThrust(space, ship);
+	}
 	
 	/**
 	 * A state that tells us what we are doing now

@@ -37,26 +37,12 @@ import barn1474.russell.ShipStateEnum;
  */
 public class myTeamClient extends TeamClient {
 
-	//Initial state for ships. In project 2 we are searching for beacons. 
-	private static final ShipStateEnum INITIAL_STATE = ShipStateEnum.GATHERING_ENERGY;  
-	
-	//how many timesteps to set the A-star replan counter to
-	private static final int ASTAR_INTERVAL = 10;
-	
-	//amount of gathered resources it takes for the ship to head home
-	private static final int SHIP_FULL = 1500;
-	
-	//the number of timesteps at the end of the game that should be used for frantic
-	//last minute gathering of resources
-	private static final int END_OF_TIME = 1000;
-	
 	HashSet<SpacewarGraphics> myGraphics;
-	private static final double APPROACH_VELOCITY = 1.0;
 
-	/**
-	 * Map of ship UUID to its knowledge representation
-	 */
-	HashMap<UUID, KnowledgeRepOne> knowledgeMap;
+	///**
+	// * Map of ship UUID to its knowledge representation
+	// */
+	//HashMap<UUID, KnowledgeRepOne> knowledgeMap; //Moved to a static field of KnowledgeRepOne
 
 	/**
 	 * Manages the population for genetic learning.
@@ -66,7 +52,7 @@ public class myTeamClient extends TeamClient {
 	@Override
 	public void initialize(Toroidal2DPhysics space) {
 		myGraphics = new HashSet<SpacewarGraphics>();
-		knowledgeMap = new HashMap<UUID, KnowledgeRepOne>();
+		//knowledgeMap = new HashMap<UUID, KnowledgeRepOne>();
 		population = new BbbPopulation();
 		try {
 			population.readFromFile(getKnowledgeFile());
@@ -101,93 +87,11 @@ public class myTeamClient extends TeamClient {
 			if (actionable instanceof Ship) {
 				Ship ship = (Ship) actionable;
 
-				//add any new ships to knowledge map
-				if (!knowledgeMap.containsKey(ship.getId())) {
-					knowledgeMap.put(ship.getId(), new KnowledgeRepOne());
-					knowledgeMap.get(ship.getId()).setState(INITIAL_STATE);
-				}
-				KnowledgeRepOne data = knowledgeMap.get(ship.getId());
-				
-				//store the old state so we can force a replan if it changes
-				ShipStateEnum oldState = data.getState();
-				
-				//first set the state of the ship accordingly
-				if(space.getMaxTime() - space.getCurrentTimestep() < END_OF_TIME){
-					data.setState(ShipStateEnum.GATHERING_RESOURCES);
-				}
-				else if(ship.getResources().getTotal() > SHIP_FULL) {
-					data.setState(ShipStateEnum.DELIVERING_RESOURCES);
-				}
-				else {
-					data.setState(ShipStateEnum.GATHERING_ENERGY);
-				}
-				
-				
-				if (oldState != data.getState()) {
-					data.setObjective(null);
-				}
-				
-				//update info in case path was nullified
-				data.update(space);
-				
-				//for debugging
-				//myGraphics.add(new TextGraphics("State: " + data.getState(), new Position(10.0, 10.0), Color.WHITE));
-				//myGraphics.add(new TextGraphics("Mass: " + ship.getMass(), new Position(10.0, 20.0), Color.WHITE));
-				//myGraphics.add(new TextGraphics("Resources: " + ship.getResources().getTotal(), new Position(10.0, 30.0), Color.WHITE));
-				
-				//do we need to replan any main objectives?
-				if (!data.isObjectiveListValid()){
-					
-					switch(data.getState()) {
-					case DELIVERING_RESOURCES:
-						//choose the closest base for now
-						Base myBase = data.getNearestBase(space, ship);
-						//now select objects between here and there to visit
-						data.setObjectiveList(NavigationObjects.getObjectsToVisit(space, ship, myBase));
-						break;
-					case GATHERING_ENERGY:
-						//main case for this project
-						//choose the closest beacon as the final destination.
-						Beacon beacon = data.getNearestBeacon(space, ship);
-						//now select objects between here and there to visit
-						data.setObjectiveList(NavigationObjects.getObjectsToVisit(space, ship, beacon));
-						break;
-					case GATHERING_RESOURCES:
-						//if we're in this mode it's because time is running short
-						//just go back and forth between resources and home
-						Asteroid asteroid = data.getNearestAsteroid(space, ship);
-						Base mybase = data.getNearestBase(space, ship);
-						LinkedList<AbstractObject> list = new LinkedList<AbstractObject>();
-						if (asteroid != null){
-							list.addFirst(mybase);
-							list.addFirst(asteroid);
-						}
-						data.setObjectiveList(list);
-						break;
-					default:
-						break;
-					}
+				Vector2D thrust = KnowledgeRepOne.doStepGetThrust(ship, space);
 
-				
-				}
-				
-				//do we need to set the next local objective?
-				if (data.getObjective() == null || (data.getObjective() instanceof Base && ship.getResources().getTotal() == 0)) {
-					data.setTimeTilAStar(0);
-					data.setObjective(data.popNextObjective());
-				}
-				
-				//the navigational A Star is done once every so many ticks
-				if (data.getTimeTilAStar() == 0) {
-					data.setTimeTilAStar(ASTAR_INTERVAL);
-					data.setPath(AStar.doAStar(space, ship, data.getObjective(), ship));
-				}
-				data.decrementTimeTilAStar();
-				
-
-				//thrust gets the low level where to go next
-				Vector2D thrust = data.getThrust(space, ship);
 				myActions.put(ship.getId(), new RawAction(thrust, 0));
+
+				KnowledgeRepOne data = KnowledgeRepOne.get(ship);
 				myGraphics.addAll(data.getGraphics());
 				myGraphics.addAll(data.getNavGraphics(space, ship));
 			}
@@ -229,8 +133,8 @@ public class myTeamClient extends TeamClient {
 					purchases.put(ship.getId(), PurchaseTypes.BASE);
 					// AI #1 needs to reset which base is the target in this event.
 
-						if (knowledgeMap.containsKey(ship.getId())) {
-							KnowledgeRepOne data = knowledgeMap.get(ship.getId());
+						KnowledgeRepOne data = KnowledgeRepOne.get(ship);
+						if (data != null) {
 							data.setObjective(null);
 						}
 

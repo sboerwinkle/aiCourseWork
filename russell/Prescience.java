@@ -238,6 +238,8 @@ class Prescience extends Thread {
         SpacewarGraphics aimpointgraphic = new CircleGraphics(3, Color.GREEN,aimPoint);
         workingGraphics.add(aimpointgraphic);
 
+	Vector2D thrust = KnowledgeRepOne.doStepGetThrust(ship, space);
+
         movement = pdController.getRawAction(space,ship.getPosition(),goal,aimPoint);
 
         return movement;
