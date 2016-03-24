@@ -12,7 +12,7 @@ class ShipState {
     boolean shooting;
     long lastShotTick;
     //holds chromosome and fitness for this ship
-    BbbIndividual chromosome;
+    BbbIndividual genome;
 
 
     public ShipState(Ship ship,Position aimPoint) {
@@ -26,6 +26,14 @@ class ShipState {
 
     }
 
+    public BbbIndividual getGenome(){
+    	return genome;
+    }
+    
+    public void setGenome(BbbIndividual i){
+    	genome = i;
+    }
+    
     public boolean getShooting() {
         return shooting;
     }
