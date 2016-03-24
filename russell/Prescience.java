@@ -350,8 +350,8 @@ class Prescience extends Thread {
                     }
                 }
 
-		double angularShotLimit = currentShipState.getGenome().getChromosome().getGene(2);
-		double intersectionTimeLimit = currentShipState.getGenome().getChromosome().getGene(3);
+		double angularShotLimit = state.getGenome().getChromosome().getGene(2);
+		double intersectionTimeLimit = state.getGenome().getChromosome().getGene(3);
 
                 if(aimPoint != null && state.getShooting() && knowledgeUpdates - lastShotTick > 1) {
 
