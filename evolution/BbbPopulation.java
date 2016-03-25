@@ -51,7 +51,7 @@ public class BbbPopulation {
 						Double.valueOf(vals[3])
 						));
 				ind.setFitness(Double.valueOf(vals[4]));
-				individuals.add(ind);
+				add(ind);
 			}
 			
 			buffR.close();
