@@ -241,7 +241,7 @@ class Prescience extends Thread {
 
         switch(currentShipState) {
         case GATHERING_ENERGY:
-            goalObject = knowledge.getEnergySources(500).getClosestTo(ship.getPosition());
+            goalObject = knowledge.getEnergySources(2000).getClosestTo(ship.getPosition());
             goal = goalObject.getPosition();
             state.setShooting(false);
             break;
