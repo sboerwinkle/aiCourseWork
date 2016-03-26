@@ -1,5 +1,5 @@
 
-package barn1474.russell;
+package barn1474;
 
 import java.util.Set;
 import java.util.HashSet;

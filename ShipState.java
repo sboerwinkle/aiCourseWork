@@ -1,9 +1,10 @@
 
-package barn1474.russell;
+package barn1474;
 
 import spacesettlers.objects.Ship;
 import spacesettlers.utilities.Position;
 import barn1474.evolution.BbbIndividual;
+import barn1474.russell.ShipStateEnum;
 
 class ShipState {
     Ship ship;

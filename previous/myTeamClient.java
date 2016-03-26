@@ -1,4 +1,4 @@
-package barn1474;
+package barn1474.previous;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;

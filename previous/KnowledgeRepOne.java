@@ -1,4 +1,4 @@
-package barn1474;
+package barn1474.previous;
 
 import java.awt.Color;
 import java.util.HashMap;
@@ -14,8 +14,10 @@ import spacesettlers.objects.Base;
 import spacesettlers.objects.Beacon;
 import spacesettlers.objects.Ship;
 import spacesettlers.simulator.Toroidal2DPhysics;
-import spacesettlers.utilities.Position;
 import spacesettlers.utilities.Vector2D;
+import barn1474.AStar;
+import barn1474.NavigationObjects;
+import barn1474.Path;
 import barn1474.russell.ShipStateEnum;
 import barn1474.russell.TextGraphics;
 
