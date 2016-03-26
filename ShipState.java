@@ -23,19 +23,19 @@ class ShipState {
         state = ShipStateEnum.GATHERING_RESOURCES;
         long lastShotTick = 0;
         boolean shooting = true;
-	genome = new BbbIndividual();
+        genome = new BbbIndividual();
         stateUpdate();
 
     }
 
-    public BbbIndividual getGenome(){
-    	return genome;
+    public BbbIndividual getGenome() {
+        return genome;
     }
-    
-    public void setGenome(BbbIndividual i){
-    	genome = i;
+
+    public void setGenome(BbbIndividual i) {
+        genome = i;
     }
-    
+
     public boolean getShooting() {
         return shooting;
     }
