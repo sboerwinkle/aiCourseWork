@@ -2,6 +2,7 @@
 package barn1474;
 
 import java.awt.Color;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,6 +30,8 @@ import spacesettlers.objects.weapons.Missile;
 import spacesettlers.simulator.Toroidal2DPhysics;
 import spacesettlers.utilities.Position;
 import spacesettlers.utilities.Vector2D;
+import barn1474.evolution.BbbIndividual;
+import barn1474.evolution.BbbPopulation;
 import barn1474.russell.ShipStateEnum;
 
 class Prescience extends Thread {
@@ -56,6 +59,11 @@ class Prescience extends Thread {
     //Used for timeing.
     long knowledgeUpdates;
 
+    //genetic learning population
+    BbbPopulation population;
+    
+    String knowledgeFile;
+    
     //These objects are used for communicating with
     //the outside world. They should be carefully synchronized.
 
@@ -71,7 +79,7 @@ class Prescience extends Thread {
     /////////////////////////////////////////////////////////
 
 
-    Prescience(Toroidal2DPhysics space) {
+    Prescience(Toroidal2DPhysics space, String knowledgeFile) {
         this.spaceSim = new SpaceSimulation(space,space.getTimestep()*SIMULATION_TIMESTEP_SCALING_FACTOR);
         this.knowledge = new Knowledge(space);
         this.newKnowledge = false;
@@ -80,11 +88,25 @@ class Prescience extends Thread {
         this.exit=false;
         this.executor = Executors.newSingleThreadExecutor();
         this.knowledgeUpdates = 0;
+        this.knowledgeFile = knowledgeFile;
         this.shipStates = new HashMap<UUID, ShipState>();
         workingGraphics = new HashSet<SpacewarGraphics>();
         workingActions = new HashMap<UUID, AbstractAction>();
         workingShipStates = new HashMap<UUID, ShipState>();
         random = new Random(20);
+        //load population
+        this.population = new BbbPopulation();
+		try {
+			this.population.readFromFile(knowledgeFile);
+		} catch (FileNotFoundException e) {
+			// then just make some random ones
+			BbbIndividual id;
+			for (int j = 0; j < 50; j++){
+				id = new BbbIndividual();
+				this.population.add(id);
+			}
+		}
+		
         //Look at me being such a nice person and not causing everyone else
         //to time out by setting my thread priority too high.
         Thread.currentThread().setPriority(Thread.currentThread().getPriority()+1);
@@ -185,7 +207,8 @@ class Prescience extends Thread {
         state = workingShipStates.get(ship.getId());
 
         if(state == null) {
-            state = new ShipState(ship,aimPoint);
+        	//create new state, with an individual genome
+            state = new ShipState(ship, aimPoint, this.population.getNextIndividual());
         } else {
             state.setShip(ship);
         }
@@ -231,7 +254,6 @@ class Prescience extends Thread {
                    getPosition();
         state.setAimPoint(aimPoint);
 
-
         workingShipStates.put(ship.getId(),state);
 
         SpacewarGraphics aimpointgraphic = new CircleGraphics(3, Color.GREEN,aimPoint);
@@ -263,6 +285,12 @@ class Prescience extends Thread {
 
     public void exit() {
         exit = true;
+        
+        //make sure to evaluate the individuals
+		
+      	//then save
+        population.writeToFile(knowledgeFile);
+        
         synchronized(executor) {
             executor.shutdownNow();
         }
