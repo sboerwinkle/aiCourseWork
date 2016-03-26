@@ -16,14 +16,14 @@ class ShipState {
     BbbIndividual genome;
 
 
-    public ShipState(Ship ship,Position aimPoint) {
+    public ShipState(Ship ship,Position aimPoint, BbbIndividual genome) {
 
         this.ship = ship;
         this.aimPoint = aimPoint;
         state = ShipStateEnum.GATHERING_RESOURCES;
         long lastShotTick = 0;
         boolean shooting = true;
-	genome = new BbbIndividual();
+        this.genome = genome;
         stateUpdate();
 
     }
