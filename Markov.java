@@ -23,10 +23,11 @@ public class Markov {
 		double[] mins = {0, 0, 0};
 		double[] maxs = {1, 1, 1};
 		new File("unitTestData.dat").delete();
+		new File("monteCarloGraphData.txt").delete();
 		//Since this is going to be called multiple times per second, default source of random which inits from system clock isn't okay.
 		final Random actualRand = new Random();
-		for (int i = 0; i < /*30000*/ 200; i++) {
-			Markov m = new Markov(0.7, /*100*/ 25, mins, maxs, "unitTestData.dat", 1);
+		for (int i = 0; i < 30000 /*200*/; i++) {
+			Markov m = new Markov(0.7, 100 /*25*/, mins, maxs, "unitTestData.dat", 1);
 			m.rand = actualRand;
 			double[] ps = m.getParameters();
 			double score = 0.7 - Math.abs(ps[0]-0.7) + ps[1]*5 - Math.floor(ps[1]*5) + ps[2] + actualRand.nextDouble();
@@ -193,6 +194,10 @@ public class Markov {
 			System.out.println("Wrote new par mins, maxes:");
 			printArray(parMins);
 			printArray(parMaxs);
+			out.close();
+			out = new FileOutputStream(new File("monteCarloGraphData.txt"), true);
+			out.write(((Double)(totalScore/sampleSize)).toString().getBytes());
+			out.write('\n');
 			out.close();
 			out = null;
 		} catch (IOException e) {
