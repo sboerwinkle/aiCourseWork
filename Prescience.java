@@ -222,8 +222,7 @@ class Prescience extends Thread {
         double krp = state.getGenome().getChromosome().getGene(1);
 
         //Initialize with zeros for the lateral movement because we don't care
-        //LibrePD pdController = new LibrePD(krv,krp,0,0);
-        LibrePD pdController = new LibrePD(2,1,2,1);
+        LibrePD pdController = new LibrePD(krv,krp,0,0);
 
 
         switch(currentShipState) {
