@@ -26,7 +26,7 @@ public class RussellTeamClient extends spacesettlers.clients.TeamClient {
 
     @Override
     public void initialize(Toroidal2DPhysics space) {
-        this.prescience = new Prescience(space, getKnowledgeFile());
+        this.prescience = new Prescience(space, getKnowledgeFile(), true);
         try {
             prescience.start();
         } catch(Exception e) {
@@ -37,7 +37,7 @@ public class RussellTeamClient extends spacesettlers.clients.TeamClient {
     @Override
     public void shutDown(Toroidal2DPhysics space) {
         try {
-            prescience.exit();
+            prescience.exit(space);
         } catch(Exception e) {
             e.printStackTrace();
         }

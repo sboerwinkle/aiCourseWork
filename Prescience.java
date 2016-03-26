@@ -30,6 +30,7 @@ import spacesettlers.objects.weapons.Missile;
 import spacesettlers.simulator.Toroidal2DPhysics;
 import spacesettlers.utilities.Position;
 import spacesettlers.utilities.Vector2D;
+import barn1474.evolution.BbbChromosome;
 import barn1474.evolution.BbbIndividual;
 import barn1474.evolution.BbbPopulation;
 import barn1474.russell.ShipStateEnum;
@@ -59,8 +60,10 @@ class Prescience extends Thread {
     //Used for timeing.
     long knowledgeUpdates;
 
+    boolean useGA;
     //genetic learning population
     BbbPopulation population;
+    Markov mark;
     
     String knowledgeFile;
     
@@ -79,7 +82,7 @@ class Prescience extends Thread {
     /////////////////////////////////////////////////////////
 
 
-    Prescience(Toroidal2DPhysics space, String knowledgeFile) {
+    Prescience(Toroidal2DPhysics space, String knowledgeFile, boolean useGA) {
         this.spaceSim = new SpaceSimulation(space,space.getTimestep()*SIMULATION_TIMESTEP_SCALING_FACTOR);
         this.knowledge = new Knowledge(space);
         this.newKnowledge = false;
@@ -94,8 +97,10 @@ class Prescience extends Thread {
         workingActions = new HashMap<UUID, AbstractAction>();
         workingShipStates = new HashMap<UUID, ShipState>();
         random = new Random(20);
-        //load population
-        this.population = new BbbPopulation();
+	this.useGA = useGA;
+	if (useGA) {
+		//load population
+		this.population = new BbbPopulation();
 		try {
 			this.population.readFromFile(knowledgeFile);
 		} catch (FileNotFoundException e) {
@@ -106,6 +111,9 @@ class Prescience extends Thread {
 				this.population.add(id);
 			}
 		}
+	} else {
+		mark = new Markov(new double[] {0, 0, 0, 0}, new double[] {10, 10, 10, 30}, knowledgeFile);
+	}
 		
         //Look at me being such a nice person and not causing everyone else
         //to time out by setting my thread priority too high.
@@ -208,9 +216,14 @@ class Prescience extends Thread {
 
         if(state == null) {
         	//create new state, with an individual genome
-            state = new ShipState(ship, aimPoint, this.population.getNextIndividual());
+		if (useGA) {
+        		state = new ShipState(ship, aimPoint, this.population.getNextIndividual());
+		} else {
+			double[] vs = mark.getParameters();
+			state = new ShipState(ship, aimPoint, new BbbIndividual(new BbbChromosome(vs[0], vs[1], vs[2], vs[3])));
+		}
         } else {
-            state.setShip(ship);
+        	state.setShip(ship);
         }
 
         currentShipState = state.getState();
@@ -283,13 +296,22 @@ class Prescience extends Thread {
     //The following functions are the external interface used by
     //my team client
 
-    public void exit() {
+    public void exit(Toroidal2DPhysics space) {
         exit = true;
-        
-        //make sure to evaluate the individuals
-		
-      	//then save
-        population.writeToFile(knowledgeFile);
+
+	if (useGA) {
+		//make sure to evaluate the individuals
+			
+		//then save
+		population.writeToFile(knowledgeFile);
+	} else {
+		for (Map.Entry<UUID,ShipState> e : shipStates.entrySet()) {
+			Ship s = (Ship)space.getObjectById(e.getKey());
+			double score = s.getDamageInflicted();
+			BbbChromosome c = e.getValue().getGenome().getChromosome();
+			mark.doEndTimes(score, new double[] {c.getGene(0), c.getGene(1), c.getGene(2), c.getGene(3)});
+		}
+	}
         
         synchronized(executor) {
             executor.shutdownNow();
