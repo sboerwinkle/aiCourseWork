@@ -62,7 +62,7 @@ public class Markov {
     }
 
     public Markov(double[] pSpaceMins, double[] pSpaceMaxs, String kf) {
-        init(0.8, 100, pSpaceMins, pSpaceMaxs, kf, 0.99);
+        init(0.8, 30, pSpaceMins, pSpaceMaxs, kf, 0.99);
     }
 
     void init(double f, int s, double[] parameterSpaceMins, double[] parameterSpaceMaxs, String kf, double caution) {
