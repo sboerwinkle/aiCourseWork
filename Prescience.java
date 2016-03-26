@@ -112,7 +112,7 @@ class Prescience extends Thread {
 			}
 		}
 	} else {
-		mark = new Markov(new double[] {0, 0, 0, 0}, new double[] {10, 10, 10, 30}, knowledgeFile);
+		mark = new Markov(new double[] {0, 0, 0, 0}, new double[] {10, 10, 50, 10}, knowledgeFile);
 	}
 		
     }
