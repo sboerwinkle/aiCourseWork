@@ -91,9 +91,9 @@ public class myTeamClient extends TeamClient {
 
 				myActions.put(ship.getId(), new RawAction(thrust, 0));
 
-				KnowledgeRepOne data = KnowledgeRepOne.get(ship);
+				/*KnowledgeRepOne data = KnowledgeRepOne.get(ship);
 				myGraphics.addAll(data.getGraphics());
-				myGraphics.addAll(data.getNavGraphics(space, ship));
+				myGraphics.addAll(data.getNavGraphics(space, ship));*/
 			}
 			else {
 				// it is a base and nobody cares about them, lol

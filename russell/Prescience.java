@@ -19,7 +19,9 @@ import barn1474.russell.SpaceSimulation;
 import barn1474.russell.LibrePD;
 import barn1474.russell.ShipStateEnum;
 import barn1474.russell.ShipState;
+import barn1474.AStar;
 import barn1474.KnowledgeRepOne;
+import barn1474.Path;
 import spacesettlers.actions.AbstractAction;
 import spacesettlers.actions.DoNothingAction;
 import spacesettlers.actions.MoveAction;
@@ -208,7 +210,8 @@ class Prescience extends Thread {
 	double krp = state.getGenome().getChromosome().getGene(1);
 
 	//Initialize with zeros for the lateral movement because we don't care
-        LibrePD pdController = new LibrePD(krv,krp,0,0);
+        //LibrePD pdController = new LibrePD(krv,krp,0,0);
+        LibrePD pdController = new LibrePD(2,1,2,1);
 
 
         switch(currentShipState) {
@@ -245,11 +248,24 @@ class Prescience extends Thread {
         SpacewarGraphics aimpointgraphic = new CircleGraphics(3, Color.GREEN,aimPoint);
         workingGraphics.add(aimpointgraphic);
 
-	Vector2D thrust = KnowledgeRepOne.doStepGetThrust(ship, space);
+	Path p = AStar.doAStar(space, ship, goalObject, ship);
+	//System.out.println("goalObject: " + goalObject + " p.isValid: " + p.isValid());
+	Vector2D thrust = (p == null) ? new Vector2D() : p.getThrust(space, ship);
+	/*double angle = thrust.getAngle();
+	System.out.println(angle-oldAngle);
+	oldAngle = angle;*/
+	//Vector2D thrust = KnowledgeRepOne.doStepGetThrust(ship, space);
 
         movement = pdController.getRawAction(space,ship.getPosition(),goal,aimPoint);
+	//return movement;
+
+	//KnowledgeRepOne data = KnowledgeRepOne.get(ship);
+	//workingGraphics.clear();
+	//workingGraphics.addAll(p.getGraphics());
+	//workingGraphics.addAll(data.getNavGraphics(space, ship));*/
 
         return new RawAction(thrust,movement.getMovement(space,ship).getAngularAccleration());
+        //return new RawAction(thrust,0);
     }
 
 
@@ -351,10 +367,10 @@ class Prescience extends Thread {
                     }
                 }
 
-		double angularShotLimit = state.getGenome().getChromosome().getGene(2);
-		double intersectionTimeLimit = state.getGenome().getChromosome().getGene(3);
-
                 if(aimPoint != null && state.getShooting() && knowledgeUpdates - lastShotTick > 1) {
+
+		    double angularShotLimit = state.getGenome().getChromosome().getGene(2);
+		    double intersectionTimeLimit = state.getGenome().getChromosome().getGene(3);
 
                     boolean shoot = false;
 

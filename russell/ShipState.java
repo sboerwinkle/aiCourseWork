@@ -22,6 +22,7 @@ class ShipState {
         state = ShipStateEnum.GATHERING_RESOURCES;
         long lastShotTick = 0;
         boolean shooting = true;
+	genome = new BbbIndividual();
         stateUpdate();
 
     }

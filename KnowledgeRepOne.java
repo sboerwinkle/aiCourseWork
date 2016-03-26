@@ -172,7 +172,7 @@ public class KnowledgeRepOne {
 	 * Things to draw on the screen
 	 * @return set of Spacewar Graphics
 	 */
-	HashSet<SpacewarGraphics> getGraphics() {
+	public HashSet<SpacewarGraphics> getGraphics() {
 		if (path == null) return new HashSet<SpacewarGraphics>();
 		return path.getGraphics();
 	}
@@ -451,7 +451,7 @@ public class KnowledgeRepOne {
 	 * @param me
 	 * @return
 	 */
-	HashSet<SpacewarGraphics> getNavGraphics(Toroidal2DPhysics space, Ship me) {
+	public HashSet<SpacewarGraphics> getNavGraphics(Toroidal2DPhysics space, Ship me) {
 		HashSet<SpacewarGraphics> ret = new HashSet<SpacewarGraphics>();
 		
 		//draw from the ship to the immediate objective

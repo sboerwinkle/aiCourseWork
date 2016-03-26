@@ -13,7 +13,7 @@ import spacesettlers.simulator.Toroidal2DPhysics;
 import spacesettlers.utilities.Position;
 import spacesettlers.utilities.Vector2D;
 
-class Path {
+public class Path {
 	static final double CRUISE_SPEED = 50;
 	//How close we have to be before we say we've hit a point
 	static final double DIST_EPSILON = 5;
@@ -43,7 +43,7 @@ class Path {
 	}
 
 	//Puts one red circle per waypoint left to complete
-	HashSet<SpacewarGraphics> getGraphics() {
+	public HashSet<SpacewarGraphics> getGraphics() {
 		HashSet<SpacewarGraphics> ret = new HashSet<SpacewarGraphics>();
 		for (int i = numWaypointsCompleted; i < waypoints.length; i++) {
 			ret.add(new CircleGraphics(2, Color.RED, new Position(new Vector2D(objective.getPosition()).add(waypoints[i]))));
@@ -66,7 +66,7 @@ class Path {
 	 * Gives the thrust vector to head towards the target.
 	 * Assumes we can accelerate instantly.
 	 */
-	Vector2D getThrust(Toroidal2DPhysics space, Ship me) {
+	public Vector2D getThrust(Toroidal2DPhysics space, Ship me) {
 		//System.out.printf("On waypoint %d/%d\n", numWaypointsCompleted, waypoints.length);
 		if (objectiveID == null) return new Vector2D(0, 0);
 		objective = space.getObjectById(objectiveID);
@@ -88,15 +88,21 @@ class Path {
 		}
 		vec = vec.unit().multiply(CRUISE_SPEED);
 		vec = vec.add(objective.getPosition().getTranslationalVelocity());
-		vec = vec.subtract(me.getPosition().getTranslationalVelocity());
+		vec = vec.subtract(me.getPosition().getTranslationalVelocity().divide(2));
 		return vec.divide(space.getTimestep());
 	}
+
+	/*public static Vector2D testFunction(Toroidal2DPhysics space, Ship me, AbstractObject o) {
+		UUID i = o.getID();
+		AbstractObject o2 = space.getObjectById(i);
+		return space.findSho
+	}*/
 
 	/**
 	 * Returns whether the path is valid.
 	 * Note that paths invalidate themselves on completion.
 	 */
-	boolean isValid() {
+	public boolean isValid() {
 		return objectiveID != null;
 	}
 }

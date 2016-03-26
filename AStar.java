@@ -7,7 +7,7 @@ import spacesettlers.utilities.Position;
 import spacesettlers.utilities.Vector2D;
 import java.util.PriorityQueue;
 
-class AStar {
+public class AStar {
 	//Definition of the 8 directions, in terms of Displacement X and Displacement Y
 	static final int[] dxs = {-1, -1, -1,  0,  1,  1,  1,  0};
 	static final int[] dys = {-1,  0,  1,  1,  1,  0, -1, -1};
@@ -43,7 +43,7 @@ class AStar {
 	 * @param b The object to get to. Assumed we're going to match its velocity.
 	 * @param me The ship who's going to be doing this. The only object besides a and b which the collision checker ignores. Also used for radius and mass of navigating object.
 	 */
-	static Path doAStar(Toroidal2DPhysics space, AbstractObject a, AbstractObject b, Ship me) {
+	public static Path doAStar(Toroidal2DPhysics space, AbstractObject a, AbstractObject b, Ship me) {
 		radius = me.getRadius();
 		AStar.me = me;
 		origin = a;
