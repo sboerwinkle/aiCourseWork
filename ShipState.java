@@ -74,7 +74,7 @@ class ShipState {
     }
 
     public void stateUpdate() {
-        switch(state) {
+        /*switch(state) {
         case GATHERING_RESOURCES:
             if(ship.getEnergy() < 2500) {
                 state = ShipStateEnum.GATHERING_ENERGY;
@@ -100,7 +100,8 @@ class ShipState {
             break;
         default:
             state = ShipStateEnum.GATHERING_RESOURCES;
-        }
+        }*/
+	state = (ship.getResources().getMass() > 0) ? ShipStateEnum.DELIVERING_RESOURCES : ShipStateEnum.GATHERING_ENERGY;
     }
 
 }
