@@ -84,9 +84,14 @@ public class Markov {
 
 
     void printArray(double[] a) {
-        System.out.printf("{%.2f", a[0]);
-        for (int i = 1; i < a.length; i++) System.out.printf(" %.2f", a[i]);
-        System.out.println("}");
+	try {
+            out.write(String.format("{%.2f", a[0]).getBytes());
+            for (int i = 1; i < a.length; i++) out.write(String.format(" %.2f", a[i]).getBytes());
+            out.write("}\n".getBytes());
+	} catch (IOException e) {
+		System.out.println("*Burns to death*");
+		e.printStackTrace();
+	}
     }
 
     public double[] getParameters() {
@@ -191,11 +196,11 @@ public class Markov {
             out = new FileOutputStream(f, false);
             for (double d : parMins) writeDouble(d);
             for (double d : parMaxs) writeDouble(d);
-            System.out.println("Wrote new par mins, maxes:");
-            printArray(parMins);
-            printArray(parMaxs);
             out.close();
             out = new FileOutputStream(new File("monteCarloGraphData.txt"), true);
+            //System.out.println("Wrote new par mins, maxes:");
+            printArray(parMins);
+            printArray(parMaxs);
             out.write(((Double)(totalScore/sampleSize)).toString().getBytes());
             out.write('\n');
             out.close();
