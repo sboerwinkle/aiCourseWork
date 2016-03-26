@@ -28,14 +28,14 @@ class ShipState {
 
     }
 
-    public BbbIndividual getGenome(){
-    	return genome;
+    public BbbIndividual getGenome() {
+        return genome;
     }
-    
-    public void setGenome(BbbIndividual i){
-    	genome = i;
+
+    public void setGenome(BbbIndividual i) {
+        genome = i;
     }
-    
+
     public boolean getShooting() {
         return shooting;
     }

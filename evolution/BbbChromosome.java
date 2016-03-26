@@ -8,8 +8,8 @@ public class BbbChromosome {
 	public static final int geneSize = 4;
 	private double[] genes;
 
-	//5.29,7,0.8,0.16
-	private static final double[] newGeneSeeds = {5.29,7.0,0.8,0.16};
+	//5.29,7,5,15
+	private static final double[] newGeneSeeds = {5.29,7.0,5,15};
 	
 	
 	/**
