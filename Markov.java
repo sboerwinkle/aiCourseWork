@@ -24,10 +24,11 @@ public class Markov {
         double[] maxs = {1, 1, 1};
         new File("unitTestData.dat").delete();
         new File("monteCarloGraphData.txt").delete();
+	new File("monteCarloIndividualData.txt").delete();
         //Since this is going to be called multiple times per second, default source of random which inits from system clock isn't okay.
         final Random actualRand = new Random();
-        for (int i = 0; i < 30000 /*200*/; i++) {
-            Markov m = new Markov(0.7, 100 /*25*/, mins, maxs, "unitTestData.dat", 1);
+        for (int i = 0; i < /*30000*/ 200; i++) {
+            Markov m = new Markov(0.7, /*100*/ 25, mins, maxs, "unitTestData.dat", 1);
             m.rand = actualRand;
             double[] ps = m.getParameters();
             double score = 0.7 - Math.abs(ps[0]-0.7) + ps[1]*5 - Math.floor(ps[1]*5) + ps[2] + actualRand.nextDouble();
@@ -132,6 +133,20 @@ public class Markov {
     }
 
     public void doEndTimes(double teamScore, double[] parameters) {
+	try {
+		out = new FileOutputStream(new File("monteCarloIndividualData.txt"), true);
+		printArray(parameters);
+		out.write(((Double)teamScore).toString().getBytes());
+		out.write('\n');
+		out.close();
+		out = null;
+	} catch (IOException e) {
+		try {
+			out.close();
+			out = null;
+		} catch (Exception x) {}
+		System.out.println("Failed writing individual data!");
+	}
         //System.out.print("Markov Shutdown: ");
         File f = new File(knowledgeFile);
         try {
