@@ -115,9 +115,6 @@ class Prescience extends Thread {
 		mark = new Markov(new double[] {0, 0, 0, 0}, new double[] {10, 10, 10, 30}, knowledgeFile);
 	}
 		
-        //Look at me being such a nice person and not causing everyone else
-        //to time out by setting my thread priority too high.
-        Thread.currentThread().setPriority(Thread.currentThread().getPriority()+1);
     }
 
     public SpaceSimulation runSimulation(Toroidal2DPhysics space) {
@@ -140,6 +137,10 @@ class Prescience extends Thread {
 
     public void run() {
         Toroidal2DPhysics space = null;
+
+        //Look at me being such a nice person and not causing everyone else
+        //to time out by setting my thread priority too high.
+        Thread.currentThread().setPriority(Thread.currentThread().getPriority()+1);
 
         while(!exit) {
             //If we don't have new information to use then wait until
