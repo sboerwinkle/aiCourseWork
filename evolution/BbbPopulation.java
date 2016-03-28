@@ -18,6 +18,7 @@ public class BbbPopulation {
 	private static int populationCap = 50;
 	private ArrayList<BbbIndividual> individuals;
 	private int populationIndex;
+	private static final String graphDataFile = "GA_graph_data.csv";
 	
 	public BbbPopulation(){
 		super();
@@ -82,6 +83,32 @@ public class BbbPopulation {
 				fw.append("" + i.getFitness());
 				fw.append("\n");
 			}
+			fw.flush();
+			fw.close();
+		} catch (IOException e) {
+			// oh no what can we do
+			e.printStackTrace();
+		}
+		
+	}
+	
+
+	/**
+	 * Function to write to file summary data for graph
+	 * Uses simple csv format.
+	 * @param fileName
+	 */
+	public void writeGraphData(){
+		try {
+			FileWriter fw = new FileWriter(graphDataFile, true);
+			//get average
+			double total = 0;
+			int count = 0;
+			for (BbbIndividual i : individuals){
+				total += i.getFitness();
+				count++;
+			}
+			fw.append(total / count + "\n");
 			fw.flush();
 			fw.close();
 		} catch (IOException e) {
