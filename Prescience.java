@@ -299,19 +299,20 @@ class Prescience extends Thread {
     public void exit(Toroidal2DPhysics space) {
         exit = true;
 
-	if (useGA) {
-		//make sure to evaluate the individuals
-			
-		//then save
-		population.writeToFile(knowledgeFile);
-	} else {
-		for (Map.Entry<UUID,ShipState> e : shipStates.entrySet()) {
-			Ship s = (Ship)space.getObjectById(e.getKey());
-			double score = s.getDamageInflicted();
-			BbbChromosome c = e.getValue().getGenome().getChromosome();
-			mark.doEndTimes(score, new double[] {c.getGene(0), c.getGene(1), c.getGene(2), c.getGene(3)});
-		}
-	}
+        //make sure to evaluate the individuals
+        for (Map.Entry<UUID,ShipState> e : shipStates.entrySet()) {
+        	Ship s = (Ship)space.getObjectById(e.getKey());
+        	double score = s.getDamageInflicted();
+
+        	if (useGA) {
+        		e.getValue().getGenome().setFitness(score);
+        		// save
+        		population.writeToFile(knowledgeFile);
+        	} else {
+        		BbbChromosome c = e.getValue().getGenome().getChromosome();
+        		mark.doEndTimes(score, new double[] {c.getGene(0), c.getGene(1), c.getGene(2), c.getGene(3)});
+        	}
+        }
         
         synchronized(executor) {
             executor.shutdownNow();
