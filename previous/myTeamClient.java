@@ -54,16 +54,7 @@ public class myTeamClient extends TeamClient {
 		myGraphics = new HashSet<SpacewarGraphics>();
 		//knowledgeMap = new HashMap<UUID, KnowledgeRepOne>();
 		population = new BbbPopulation();
-		try {
-			population.readFromFile(getKnowledgeFile());
-		} catch (FileNotFoundException e) {
-			// then just make some random ones
-			BbbIndividual id;
-			for (int j = 0; j < 50; j++){
-				id = new BbbIndividual();
-				population.add(id);
-			}
-		}
+		population.readFromFile(getKnowledgeFile());
 		//load chromosomes into ships
 		
 	}
