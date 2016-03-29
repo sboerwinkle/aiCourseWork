@@ -31,7 +31,7 @@ public class BbbPopulation {
 	 * Read in csv and recreate list of individuals
 	 * @param fileName
 	 */
-	public void readFromFile(String fileName)throws FileNotFoundException{
+	public void readFromFile(String fileName){
 		// we could start with a blank list or just append
 		//individuals.clear();
 		String input;
@@ -57,9 +57,15 @@ public class BbbPopulation {
 			
 			buffR.close();
 		} catch (FileNotFoundException e) {
-			throw new FileNotFoundException();
+			// then just make some random ones
+			BbbIndividual id;
+			for (int j = 0; j < populationCap; j++){
+				id = new BbbIndividual();
+				add(id);
+			};
 		} catch (IOException e){
 			//problem closing file
+			e.printStackTrace();
 		}
 		
 	}
@@ -164,6 +170,8 @@ public class BbbPopulation {
 	 * The selection method will be rank selection
 	 */
 	public void nextGeneration(){
+		
+		
 		//sort so we can do by rank
 		Collections.sort(individuals);
 

@@ -101,16 +101,8 @@ class Prescience extends Thread {
 	if (useGA) {
 		//load population
 		this.population = new BbbPopulation();
-		try {
-			this.population.readFromFile(knowledgeFile);
-		} catch (FileNotFoundException e) {
-			// then just make some random ones
-			BbbIndividual id;
-			for (int j = 0; j < 50; j++){
-				id = new BbbIndividual();
-				this.population.add(id);
-			}
-		}
+		this.population.readFromFile(knowledgeFile);
+
 	} else {
 		mark = new Markov(new double[] {0, 0, 0, 0}, new double[] {10, 10, 50, 10}, knowledgeFile);
 	}
