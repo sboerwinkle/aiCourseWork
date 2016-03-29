@@ -140,6 +140,8 @@ public class BbbPopulation {
 	public BbbIndividual getNextIndividual(){
 		if (populationIndex == individuals.size()){
 			//time for next generation
+			//but first save stats on this generation
+			writeGraphData();
 			nextGeneration();
 			populationIndex = 0;
 		}
