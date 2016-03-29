@@ -44,6 +44,9 @@ public class BbbIndividual implements Comparable<BbbIndividual>{
 		this.fitness = fitness;
 	}
 
+	public boolean isUnevaluated(){
+		return this.fitness == -1;
+	}
 
 	/**
 	 * Comparison of individuals is based on fitness

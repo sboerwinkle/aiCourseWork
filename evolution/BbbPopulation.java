@@ -111,8 +111,11 @@ public class BbbPopulation {
 			double total = 0;
 			int count = 0;
 			for (BbbIndividual i : individuals){
-				total += i.getFitness();
-				count++;
+				//only count individuals with valid fitness values
+				if (!i.isUnevaluated()){
+					total += i.getFitness();
+					count++;
+				}
 			}
 			fw.append(total / count + "\n");
 			fw.flush();
