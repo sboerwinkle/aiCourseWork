@@ -15,7 +15,7 @@ import java.util.Collections;
  */
 public class BbbPopulation {
 
-	private static int populationCap = 50;
+	private static int populationCap = 30;
 	private ArrayList<BbbIndividual> individuals;
 	private int populationIndex;
 	private static final String graphDataFile = "GA_graph_data.csv";
