@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TeamClientConfig>
 	<!-- The name of the client class (this is used to construct the client so it needs to be the full class name) -->
-	<classname>barn1474.RussellTeamClientMC</classname>
-	<!--<classname>barn1474.myTeamClient</classname>-->
+	<classname>barn1474.RussellTeamClient</classname>
 	
 	<!-- You can choose the color your team's ships will be on the screen.  Specify the red, green, and blue components -->
 	<teamColorRed>128</teamColorRed>
@@ -16,5 +15,5 @@
 	<numberInitialShipsInTeam>1</numberInitialShipsInTeam>
 	
 	<!-- Optional:  if the agent needs to read in from a file, it can specify the path to it here -->
-	<knowledgeFile>bbbPopulation.csv</knowledgeFile>
+	<knowledgeFile>bbbPopulationGA.csv</knowledgeFile>
 </TeamClientConfig>
