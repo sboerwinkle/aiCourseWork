@@ -159,13 +159,21 @@ public class BbbPopulation {
 	/**
 	 * Perform the crossover on this population
 	 * The crossover method will be single-point random
-	 *  producing two children
+	 *  producing three children
 	 */
 	private void doCrossover(){
-		//pairwise crossover all individuals
-		for (int i = 0; i < individuals.size() / 2 ; i++){
+		//get current size to do since we will be adding individuals
+		int popSize = individuals.size();
+		//pairwise crossover individuals
+		for (int i = 0; i < popSize / 2 ; i++){
 			individuals.get(i * 2).getChromosome().crossover(
 					individuals.get(i * 2 + 1).getChromosome());
+			//create third child
+			BbbIndividual parent = new BbbIndividual(individuals.get(i*2));
+			BbbIndividual third = new BbbIndividual(individuals.get(i*2 + 1));
+			parent.getChromosome().crossover(third.getChromosome());
+			//append third child to population
+			add(third);
 		}
 	}
 	
@@ -179,15 +187,18 @@ public class BbbPopulation {
 		
 		//sort so we can do by rank
 		Collections.sort(individuals);
-
+		
+		//perform crossover
+		doCrossover();
+		
+		//sort again because we added members
+		Collections.sort(individuals);
+		
 		//truncate the population so we only take the top best
 		while(individuals.size() > populationCap){
 			individuals.remove(populationCap);
 		}
-
-		//perform crossover
-		doCrossover();
-
+		
 		//mutate
 		for (BbbIndividual i : individuals){
 			i.getChromosome().mutate();
