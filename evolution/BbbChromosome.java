@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class BbbChromosome {
 
-	static private double mutationFactor = 1.1;
+	static private double mutationFactor = .05;
 	public static final int geneSize = 4;
 	private double[] genes;
 
@@ -20,7 +20,7 @@ public class BbbChromosome {
 		genes = new double[geneSize];
 		Random rand = new Random();
 		for (int j = 0; j < BbbChromosome.geneSize; j++){
-			genes[j] = newGeneSeeds[j] + rand.nextGaussian() * newGeneSeeds[j] / 10.0;
+			genes[j] = newGeneSeeds[j] + rand.nextGaussian() * mutationFactor;
 		}
 
 	}
