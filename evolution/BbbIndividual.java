@@ -62,7 +62,7 @@ public class BbbIndividual implements Comparable<BbbIndividual>{
 	@Override
 	public int compareTo(BbbIndividual other) {
 		if (this.fitness == other.fitness) return 0;
-		return this.fitness > other.fitness ? 1 : -1;
+		return this.fitness > other.fitness ? -1 : 1;
 	}
 	
 	@Override
