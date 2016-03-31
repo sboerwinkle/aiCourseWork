@@ -30,6 +30,14 @@ public class BbbIndividual implements Comparable<BbbIndividual>{
 		fitness = -1;
 	}
 	
+	/**
+	 * Copy Constructor
+	 */
+	public BbbIndividual(BbbIndividual indiv){
+		this(indiv.getChromosome());
+		this.setFitness(indiv.getFitness());
+	}
+	
 	
 	public BbbChromosome getChromosome() {
 		return chromosome;
