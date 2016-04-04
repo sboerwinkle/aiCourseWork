@@ -100,24 +100,22 @@ public class BbbPopulation {
 	
 
 	/**
-	 * Function to write to file summary data for graph
+	 * Function to write this generation for analysis later
 	 * Uses simple csv format.
 	 * @param fileName
 	 */
 	public void writeGraphData(){
 		try {
 			FileWriter fw = new FileWriter(graphDataFile, true);
-			//get average
-			double total = 0;
-			int count = 0;
+			//now append all individuals in this generation
 			for (BbbIndividual i : individuals){
-				//only count individuals with valid fitness values
-				if (!i.isUnevaluated()){
-					total += i.getFitness();
-					count++;
+				for (int j = 0; j < BbbChromosome.geneSize; j++){
+					fw.append("" + i.getChromosome().getGene(j));
+					fw.append(",");
 				}
+				fw.append("" + i.getFitness());
+				fw.append("\n");
 			}
-			fw.append(total / count + "\n");
 			fw.flush();
 			fw.close();
 		} catch (IOException e) {
