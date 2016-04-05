@@ -216,7 +216,7 @@ class Prescience extends Thread {
         	if (doNotLearn) {
         		//use set values for ship behavior, no learning
         		//values are from best individual, fitness 8000
-        		state = new ShipState(ship, aimPoint, new BbbIndividual(new BbbChromosome(15.267305481, 7.179784536, 5.044921937, 15.06209076)));
+        		state = new ShipState(ship, aimPoint, new BbbIndividual(new BbbChromosome(5.419930781363686,6.867343547631839,5.195916411362722,15.206805044350778)));
         	}
         	else {
         		if (useGA) {
