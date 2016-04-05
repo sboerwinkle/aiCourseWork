@@ -39,6 +39,8 @@ class Prescience extends Thread {
 
     //If set to true the thread will quit.
     boolean exit;
+    
+    private static final boolean doNotLearn = true;
 
     //My Knowledge representation
     Knowledge knowledge;
@@ -209,12 +211,21 @@ class Prescience extends Thread {
 
         if(state == null) {
         	//create new state, with an individual genome
-		if (useGA) {
-        		state = new ShipState(ship, aimPoint, this.population.getNextIndividual());
-		} else {
-			double[] vs = mark.getParameters();
-			state = new ShipState(ship, aimPoint, new BbbIndividual(new BbbChromosome(vs[0], vs[1], vs[2], vs[3])));
-		}
+        	if (doNotLearn) {
+        		//use set values for ship behavior, no learning
+        		//values are from best individual, fitness 8000
+        		state = new ShipState(ship, aimPoint, new BbbIndividual(new BbbChromosome(15.267305481, 7.179784536, 5.044921937, 15.06209076)));
+        	}
+        	else {
+        		if (useGA) {
+        			state = new ShipState(ship, aimPoint, this.population.getNextIndividual());
+        		}
+        		else {
+        			double[] vs = mark.getParameters();
+        			state = new ShipState(ship, aimPoint, new BbbIndividual(new BbbChromosome(vs[0], vs[1], vs[2], vs[3])));
+        		}
+
+        	}
         } else {
         	state.setShip(ship);
         }
