@@ -1,0 +1,3 @@
+[submodule "Vole"]
+	path = Vole
+	url = https://github.com/rbryan/Vole
