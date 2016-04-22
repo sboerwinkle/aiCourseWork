@@ -132,6 +132,12 @@ public class Knowledge {
         return new Knowledge(space,teamObjects).addObjects(know.getObjects());
     }
 
+    public Knowledge setDiff(Knowledge know) {
+	    Knowledge ret = new Knowledge(space, teamObjects, allObjects);
+	    ret.allObjects.removeAll(know.allObjects);
+	    return ret;
+    }
+
 
     //Return a set of all objects with
     //minimum distance vectors having magnitude

@@ -20,10 +20,7 @@ public class Path {
 
     int numWaypointsCompleted;
     Vector2D[] waypoints;
-    //Persistent storage of objective
-    UUID objectiveID;
-    //Calculated from objectiveID approx. once per tick
-    AbstractObject objective;
+    int[] switchTimes;
     /**
      * An estimate, calculated by AStar.
      */
@@ -33,33 +30,25 @@ public class Path {
      */
     double timeCost;
 
-    public Path(Vector2D[] w, UUID o, double e, double t) {
+    public Path(Vector2D[] w, int[] switchTimes, double e, double t) {
         waypoints = w;
-        objectiveID = o;
-        objective = null;
+	this.switchTimes = switchTimes;
         energyCost = e;
         timeCost = t;
         numWaypointsCompleted = 0;
     }
 
-    //Puts one red circle per waypoint left to complete
+    ////Puts one red circle per waypoint left to complete
+    //Actually returns nothing, haha
     public HashSet<SpacewarGraphics> getGraphics() {
-        HashSet<SpacewarGraphics> ret = new HashSet<SpacewarGraphics>();
+	    return new HashSet<SpacewarGraphics>();
+        /*HashSet<SpacewarGraphics> ret = new HashSet<SpacewarGraphics>();
         for (int i = numWaypointsCompleted; i < waypoints.length; i++) {
             ret.add(new CircleGraphics(2, Color.RED, new Position(new Vector2D(objective.getPosition()).add(waypoints[i]))));
         }
         ret.add(new CircleGraphics(2, Color.RED, objective.getPosition()));
         return ret;
-    }
-
-    /**
-     * Keeps track of our progress through the A* generated set of waypoints.
-     * Assumes objective is set
-     */
-    Position getCurrentWaypoint() {
-        if (numWaypointsCompleted < waypoints.length)
-            return new Position(new Vector2D(objective.getPosition()).add(waypoints[numWaypointsCompleted]));
-        return objective.getPosition();
+	*/
     }
 
     /**
@@ -67,42 +56,17 @@ public class Path {
      * Assumes we can accelerate instantly.
      */
     public Vector2D getThrust(Toroidal2DPhysics space, Ship me) {
-        //System.out.printf("On waypoint %d/%d\n", numWaypointsCompleted, waypoints.length);
-        if (objectiveID == null) return new Vector2D(0, 0);
-        objective = space.getObjectById(objectiveID);
-        if (!objective.isAlive()) {
-            //Invalidate if the target died
-            objectiveID = null;
-            return new Vector2D(0, 0);
-        }
-
-        Vector2D vec = space.findShortestDistanceVector(me.getPosition(), getCurrentWaypoint());
-        if (vec.getMagnitude() < DIST_EPSILON) { // Time to progress to the next waypoint
-            if (numWaypointsCompleted == waypoints.length) {
-                //Invalidate if we've reached the end.
-                objectiveID = null;
-                return new Vector2D(0, 0);
-            }
-            numWaypointsCompleted++;
-            vec = space.findShortestDistanceVector(me.getPosition(), getCurrentWaypoint());
-        }
-        vec = vec.unit().multiply(CRUISE_SPEED);
-        vec = vec.add(objective.getPosition().getTranslationalVelocity());
-        vec = vec.subtract(me.getPosition().getTranslationalVelocity().divide(2));
-        return vec.divide(space.getTimestep());
+	    int time = space.getCurrentTimestep();
+	    while (numWaypointsCompleted < switchTimes.length && switchTimes[numWaypointsCompleted] <= time) {
+		    numWaypointsCompleted++;
+	    }
+	    return waypoints[numWaypointsCompleted];
     }
-
-    /*public static Vector2D testFunction(Toroidal2DPhysics space, Ship me, AbstractObject o) {
-    	UUID i = o.getID();
-    	AbstractObject o2 = space.getObjectById(i);
-    	return space.findSho
-    }*/
 
     /**
      * Returns whether the path is valid.
-     * Note that paths invalidate themselves on completion.
      */
     public boolean isValid() {
-        return objectiveID != null;
+        return numWaypointsCompleted < switchTimes.length;
     }
 }

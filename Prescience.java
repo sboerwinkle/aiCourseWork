@@ -277,8 +277,9 @@ class Prescience extends Thread {
         SpacewarGraphics aimpointgraphic = new CircleGraphics(3, Color.GREEN,aimPoint);
         workingGraphics.add(aimpointgraphic);
 
-        Path p = AStar.doAStar(space, ship, goalObject, ship);
+        Path p = AStar.doAStar(space, ship, goalObject, knowledge.setDiff(knowledge.getMineableAsteroids()));
         //System.out.println("goalObject: " + goalObject + " p.isValid: " + p.isValid());
+	System.out.println(p==null?"No path":"Path");
         Vector2D thrust = (p == null) ? new Vector2D() : p.getThrust(space, ship);
         /*double angle = thrust.getAngle();
         System.out.println(angle-oldAngle);
@@ -293,8 +294,8 @@ class Prescience extends Thread {
         //workingGraphics.addAll(p.getGraphics());
         //workingGraphics.addAll(data.getNavGraphics(space, ship));*/
 
-        return new RawAction(thrust,movement.getMovement(space,ship).getAngularAccleration());
-        //return new RawAction(thrust,0);
+        //return new RawAction(thrust,movement.getMovement(space,ship).getAngularAccleration());
+        return new RawAction(thrust,0);
     }
 
 
