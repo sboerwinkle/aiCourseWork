@@ -18,6 +18,8 @@ public class Path {
     //How close we have to be before we say we've hit a point
     static final double DIST_EPSILON = 5;
 
+    HashSet<SpacewarGraphics> graphics;
+
     int numWaypointsCompleted;
     Vector2D[] waypoints;
     int[] switchTimes;
@@ -30,18 +32,19 @@ public class Path {
      */
     double timeCost;
 
-    public Path(Vector2D[] w, int[] switchTimes, double e, double t) {
+    public Path(Vector2D[] w, int[] switchTimes, double e, double t, HashSet<SpacewarGraphics> g) {
         waypoints = w;
 	this.switchTimes = switchTimes;
         energyCost = e;
         timeCost = t;
         numWaypointsCompleted = 0;
+	graphics = g;
     }
 
     ////Puts one red circle per waypoint left to complete
     //Actually returns nothing, haha
     public HashSet<SpacewarGraphics> getGraphics() {
-	    return new HashSet<SpacewarGraphics>();
+	    return graphics;
         /*HashSet<SpacewarGraphics> ret = new HashSet<SpacewarGraphics>();
         for (int i = numWaypointsCompleted; i < waypoints.length; i++) {
             ret.add(new CircleGraphics(2, Color.RED, new Position(new Vector2D(objective.getPosition()).add(waypoints[i]))));
@@ -55,7 +58,7 @@ public class Path {
      * Gives the thrust vector to head towards the target.
      * Assumes we can accelerate instantly.
      */
-    public Vector2D getThrust(Toroidal2DPhysics space, Ship me) {
+    public Vector2D getThrust(Toroidal2DPhysics space) {
 	    int time = space.getCurrentTimestep();
 	    while (numWaypointsCompleted < switchTimes.length && switchTimes[numWaypointsCompleted] <= time) {
 		    numWaypointsCompleted++;

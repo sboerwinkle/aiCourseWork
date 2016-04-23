@@ -73,6 +73,7 @@ class Prescience extends Thread {
     //the outside world. They should be carefully synchronized.
 
     Map<UUID, AbstractAction> teamActions;
+    Map<UUID, Path> teamPaths = new HashMap<UUID, Path>();
 
     HashSet<SpacewarGraphics> graphics;
     Map<UUID, ShipState> shipStates;
@@ -80,6 +81,7 @@ class Prescience extends Thread {
     Random random;
     Set<SpacewarGraphics> workingGraphics = new HashSet<SpacewarGraphics>();
     Map<UUID, AbstractAction> workingActions = new HashMap<UUID, AbstractAction>();
+    Map<UUID, Path> workingPaths = new HashMap<UUID, Path>();
     Map<UUID, ShipState> workingShipStates = new HashMap<UUID, ShipState>();
     /////////////////////////////////////////////////////////
 
@@ -97,6 +99,7 @@ class Prescience extends Thread {
         this.shipStates = new HashMap<UUID, ShipState>();
         workingGraphics = new HashSet<SpacewarGraphics>();
         workingActions = new HashMap<UUID, AbstractAction>();
+	//These are already inited above, why here as well?
         workingShipStates = new HashMap<UUID, ShipState>();
         random = new Random(20);
 	this.useGA = useGA;
@@ -147,9 +150,11 @@ class Prescience extends Thread {
                 //The Knowledge isn't new anymore
                 newKnowledge = false;
                 workingActions.clear();
+		workingPaths.clear();
                 long ticksSinceKnowledgeUpdate = knowledgeUpdates % 20;
+                workingGraphics.clear(); // Do it here since getShipMovement draws the goal now
                 if(ticksSinceKnowledgeUpdate == 0) {
-                    workingGraphics.clear();
+                    //workingGraphics.clear();
 
                     space = knowledge.getSpace();
 
@@ -159,13 +164,13 @@ class Prescience extends Thread {
                     for(AbstractObject obj : spaceSim.getAllObjects()) {
                         if(obj instanceof Ship) {
                             Ship ship = (Ship) obj;
-                            SpacewarGraphics graphic = new CircleGraphics(1, ship.getTeamColor(), ship.getPosition().deepCopy());
-                            workingGraphics.add(graphic);
+                            //SpacewarGraphics graphic = new CircleGraphics(1, ship.getTeamColor(), ship.getPosition().deepCopy());
+                            //workingGraphics.add(graphic);
 
 
                         } else {
-                            SpacewarGraphics graphic = new CircleGraphics(1, Color.RED, obj.getPosition().deepCopy());
-                            workingGraphics.add(graphic);
+                            //SpacewarGraphics graphic = new CircleGraphics(1, Color.RED, obj.getPosition().deepCopy());
+                            //workingGraphics.add(graphic);
                         }
                     }
                 }
@@ -173,8 +178,9 @@ class Prescience extends Thread {
                 for(AbstractActionableObject obj: knowledge.getTeamObjects()) {
                     if(obj instanceof Ship) {
                         Ship ship = (Ship) obj;
-                        AbstractAction movement = getShipMovement(ship);
-                        workingActions.put(ship.getId(),movement);
+                        //AbstractAction movement = getShipMovement(ship);
+                        //workingActions.put(ship.getId(),movement);
+                        workingPaths.put(ship.getId(),getShipPath(ship));
 
                     }
                 }
@@ -184,12 +190,17 @@ class Prescience extends Thread {
                 shipStates.clear();
                 shipStates.putAll(workingShipStates);
             }
-            synchronized(teamActions) {
+            /*synchronized(teamActions) {
                 teamActions.clear();
                 teamActions.putAll(workingActions);
+            }*/
+            synchronized(teamPaths) {
+                teamPaths.clear();
+                teamPaths.putAll(workingPaths);
             }
 
             synchronized(graphics) {
+		graphics.clear();
                 graphics.addAll(workingGraphics);
             }
 
@@ -197,7 +208,8 @@ class Prescience extends Thread {
 
     }
 
-    public AbstractAction getShipMovement(Ship ship) {
+    //public AbstractAction getShipMovement(Ship ship) {
+    public Path getShipPath(Ship ship) {
         if(simulationKnowledge == null)
             simulationKnowledge = knowledge;
 
@@ -264,7 +276,8 @@ class Prescience extends Thread {
             state.setShooting(true);
 
         }
-
+	SpacewarGraphics graphic = new CircleGraphics(1, Color.RED, goal.deepCopy());
+	workingGraphics.add(graphic);
 
         aimPoint = simulationKnowledge.getNonActionable().
                    getShips().
@@ -277,10 +290,10 @@ class Prescience extends Thread {
         SpacewarGraphics aimpointgraphic = new CircleGraphics(3, Color.GREEN,aimPoint);
         workingGraphics.add(aimpointgraphic);
 
-        Path p = AStar.doAStar(space, ship, goalObject, knowledge.setDiff(knowledge.getMineableAsteroids()));
+        Path p = AStar.doAStar(space, ship, goalObject, simulationKnowledge.setDiff(simulationKnowledge.getMineableAsteroids()));
         //System.out.println("goalObject: " + goalObject + " p.isValid: " + p.isValid());
 	System.out.println(p==null?"No path":"Path");
-        Vector2D thrust = (p == null) ? new Vector2D() : p.getThrust(space, ship);
+        //Vector2D thrust = (p == null) ? new Vector2D() : p.getThrust(space);
         /*double angle = thrust.getAngle();
         System.out.println(angle-oldAngle);
         oldAngle = angle;*/
@@ -291,11 +304,12 @@ class Prescience extends Thread {
 
         //KnowledgeRepOne data = KnowledgeRepOne.get(ship);
         //workingGraphics.clear();
-        //workingGraphics.addAll(p.getGraphics());
+	if (p != null) workingGraphics.addAll(p.getGraphics());
         //workingGraphics.addAll(data.getNavGraphics(space, ship));*/
 
-        //return new RawAction(thrust,movement.getMovement(space,ship).getAngularAccleration());
-        return new RawAction(thrust,0);
+        //return new MyAction(p,movement.getMovement(space,ship).getAngularAccleration());
+        //return new RawAction(thrust,0);
+	return p;
     }
 
 
@@ -331,6 +345,7 @@ class Prescience extends Thread {
     getMovementStart(Toroidal2DPhysics space,
                      Set<AbstractActionableObject> actionableObjects) {
         Map<UUID,AbstractAction> newActions;
+        Map<UUID,Path> newPaths;
 
         //Update what we know about the world
         //This space object is what will be used
@@ -341,9 +356,20 @@ class Prescience extends Thread {
         }
         newKnowledge = true;
 
-        synchronized(teamActions) {
+        /*synchronized(teamActions) {
             newActions = new HashMap<UUID, AbstractAction>(teamActions);
-        }
+        }*/
+	synchronized(teamPaths) {
+		newPaths = new HashMap<UUID, Path>(teamPaths);
+	}
+	newActions = new HashMap<UUID, AbstractAction>();
+	for (UUID u : newPaths.keySet()) {
+		Path p = newPaths.get(u);
+		Vector2D thrust;
+		if (p == null) thrust = new Vector2D();
+		else thrust = p.getThrust(space);
+		newActions.put(u, new RawAction(thrust, 0));
+	}
         return newActions;
 
     }
@@ -355,8 +381,10 @@ class Prescience extends Thread {
         HashSet<SpacewarGraphics> newGraphics;
         synchronized(graphics) {
             newGraphics = new HashSet<SpacewarGraphics>(graphics);
-            graphics.clear();
         }
+	/*synchronized(teamPaths) {
+		for (Path p : teamPaths.values()) newGraphics.addAll(p.getGraphics());
+	}*/
         return newGraphics;
     }
 
