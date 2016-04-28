@@ -86,10 +86,6 @@ class Prescience extends Thread {
         this.knowledgeUpdates = 0;
         this.knowledgeFile = knowledgeFile;
         this.shipStates = new HashMap<UUID, ShipState>();
-        workingGraphics = new HashSet<SpacewarGraphics>();
-        workingActions = new HashMap<UUID, AbstractAction>();
-	//These are already inited above, why here as well?
-        workingShipStates = new HashMap<UUID, ShipState>();
         random = new Random(20);
 			
     }
