@@ -3,7 +3,6 @@ package barn1474;
 
 import spacesettlers.objects.Ship;
 import spacesettlers.utilities.Position;
-import barn1474.evolution.BbbIndividual;
 import barn1474.russell.ShipStateEnum;
 
 class ShipState {
@@ -12,28 +11,17 @@ class ShipState {
     ShipStateEnum state;
     boolean shooting;
     long lastShotTick;
-    //holds chromosome and fitness for this ship
-    BbbIndividual genome;
 
 
-    public ShipState(Ship ship,Position aimPoint, BbbIndividual genome) {
+    public ShipState(Ship ship,Position aimPoint) {
 
         this.ship = ship;
         this.aimPoint = aimPoint;
         state = ShipStateEnum.GATHERING_RESOURCES;
         long lastShotTick = 0;
         boolean shooting = true;
-        this.genome = genome;
         stateUpdate();
 
-    }
-
-    public BbbIndividual getGenome() {
-        return genome;
-    }
-
-    public void setGenome(BbbIndividual i) {
-        genome = i;
     }
 
     public boolean getShooting() {

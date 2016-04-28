@@ -2,7 +2,6 @@
 package barn1474;
 
 import java.awt.Color;
-import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -30,17 +29,12 @@ import spacesettlers.objects.weapons.Missile;
 import spacesettlers.simulator.Toroidal2DPhysics;
 import spacesettlers.utilities.Position;
 import spacesettlers.utilities.Vector2D;
-import barn1474.evolution.BbbChromosome;
-import barn1474.evolution.BbbIndividual;
-import barn1474.evolution.BbbPopulation;
 import barn1474.russell.ShipStateEnum;
 
 class Prescience extends Thread {
 
     //If set to true the thread will quit.
     boolean exit;
-    
-    private static final boolean doNotLearn = true;
 
     //My Knowledge representation
     Knowledge knowledge;
@@ -59,13 +53,8 @@ class Prescience extends Thread {
     ExecutorService executor;
 
     //Number of times knowledge object has been updated
-    //Used for timeing.
+    //Used for timing.
     long knowledgeUpdates;
-
-    boolean useGA;
-    //genetic learning population
-    BbbPopulation population;
-    Markov mark;
     
     String knowledgeFile;
     
@@ -86,7 +75,7 @@ class Prescience extends Thread {
     /////////////////////////////////////////////////////////
 
 
-    Prescience(Toroidal2DPhysics space, String knowledgeFile, boolean useGA) {
+    Prescience(Toroidal2DPhysics space, String knowledgeFile) {
         this.spaceSim = new SpaceSimulation(space,space.getTimestep()*SIMULATION_TIMESTEP_SCALING_FACTOR);
         this.knowledge = new Knowledge(space);
         this.newKnowledge = false;
@@ -102,17 +91,6 @@ class Prescience extends Thread {
 	//These are already inited above, why here as well?
         workingShipStates = new HashMap<UUID, ShipState>();
         random = new Random(20);
-	this.useGA = useGA;
-	if (!doNotLearn){
-		if (useGA) {
-			//load population
-			this.population = new BbbPopulation();
-			this.population.readFromFile(knowledgeFile);
-
-		} else {
-			mark = new Markov(new double[] {0, 0, 0, 0}, new double[] {10, 10, 50, 10}, knowledgeFile);
-		}
-	}
 			
     }
 
@@ -224,22 +202,9 @@ class Prescience extends Thread {
         state = workingShipStates.get(ship.getId());
 
         if(state == null) {
-        	//create new state, with an individual genome
-        	if (doNotLearn) {
-        		//use set values for ship behavior, no learning
-        		//values are from best individual, fitness 8000
-        		state = new ShipState(ship, aimPoint, new BbbIndividual(new BbbChromosome(5.419930781363686,6.867343547631839,5.195916411362722,15.206805044350778)));
-        	}
-        	else {
-        		if (useGA) {
-        			state = new ShipState(ship, aimPoint, this.population.getNextIndividual());
-        		}
-        		else {
-        			double[] vs = mark.getParameters();
-        			state = new ShipState(ship, aimPoint, new BbbIndividual(new BbbChromosome(vs[0], vs[1], vs[2], vs[3])));
-        		}
-
-        	}
+ 
+        	state = new ShipState(ship, aimPoint);
+        	
         } else {
         	state.setShip(ship);
         }
@@ -249,11 +214,8 @@ class Prescience extends Thread {
         /* To be critically damped, the parameters must satisfy:
         * 2 * sqrt(Kp) = Kv*/
 
-        double krv = state.getGenome().getChromosome().getGene(0);
-        double krp = state.getGenome().getChromosome().getGene(1);
-
         //Initialize with zeros for the lateral movement because we don't care
-        LibrePD pdController = new LibrePD(krv,krp,0,0);
+        LibrePD pdController = new LibrePD(5.419930781363686,6.867343547631839,5.195916411362722,15.206805044350778);
 
 
         switch(currentShipState) {
@@ -318,23 +280,6 @@ class Prescience extends Thread {
 
     public void exit(Toroidal2DPhysics space) {
         exit = true;
-
-        if (!doNotLearn){
-        	//make sure to evaluate the individuals
-            for (Map.Entry<UUID,ShipState> e : shipStates.entrySet()) {
-            	Ship s = (Ship)space.getObjectById(e.getKey());
-            	double score = s.getDamageInflicted();
-
-            	if (useGA) {
-            		e.getValue().getGenome().setFitness(score);
-            		// save
-            		population.writeToFile(knowledgeFile);
-            	} else {
-            		BbbChromosome c = e.getValue().getGenome().getChromosome();
-            		mark.doEndTimes(score, new double[] {c.getGene(0), c.getGene(1), c.getGene(2), c.getGene(3)});
-            	}
-            }
-        }
         
         synchronized(executor) {
             executor.shutdownNow();
@@ -445,8 +390,8 @@ class Prescience extends Thread {
 
                 if(aimPoint != null && state.getShooting() && knowledgeUpdates - lastShotTick > 1) {
 
-                    double angularShotLimit = state.getGenome().getChromosome().getGene(2);
-                    double intersectionTimeLimit = state.getGenome().getChromosome().getGene(3);
+                    double angularShotLimit = 5.195916411362722;
+                    double intersectionTimeLimit = 15.206805044350778;
 
                     boolean shoot = false;
 
