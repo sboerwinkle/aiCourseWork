@@ -65,6 +65,15 @@ public class Knowledge {
         allObjects.addAll(gamespace.getAllObjects());
         space=gamespace;
     }
+    
+    //Refresh list of all objects and list of team objects
+    public void update(Toroidal2DPhysics gamespace) {
+    	allObjects.clear();
+        teamObjects.clear();
+        allObjects.addAll(gamespace.getAllObjects());
+        updateAllTeamObjects(gamespace);
+        space=gamespace;
+    }
 
     public boolean isTeamObject(AbstractObject obj) {
         UUID id = obj.getId();
@@ -76,6 +85,7 @@ public class Knowledge {
         return false;
     }
     
+    //Calculate the team objects for this Knowledge by comparing team name of each object
     public void updateAllTeamObjects(Toroidal2DPhysics gamespace) {
     	this.teamObjects.clear();
     	HashSet<AbstractObject> all = new HashSet<AbstractObject>();
