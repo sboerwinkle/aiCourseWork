@@ -34,11 +34,13 @@ public class Knowledge {
     Set<AbstractObject> allObjects;
     Toroidal2DPhysics space;
     Set<AbstractActionableObject> teamObjects;
+    private static String TeamName;
     
     public Knowledge(Toroidal2DPhysics gamespace) {
         allObjects = new HashSet<AbstractObject>();
         this.allObjects.addAll(gamespace.getAllObjects());
-        this.teamObjects = null;
+        this.teamObjects = new HashSet<AbstractActionableObject>();
+        updateAllTeamObjects(gamespace);
         this.space=gamespace;
     }
 
@@ -72,6 +74,26 @@ public class Knowledge {
             }
         }
         return false;
+    }
+    
+    public void updateAllTeamObjects(Toroidal2DPhysics gamespace) {
+    	this.teamObjects.clear();
+    	HashSet<AbstractObject> all = new HashSet<AbstractObject>();
+        all.addAll(gamespace.getAllObjects());
+        for (AbstractObject o : all) {
+        	if (o instanceof AbstractActionableObject){
+        		AbstractActionableObject a = (AbstractActionableObject)o;
+        		if (a.getTeamName() == this.TeamName) {
+        			this.teamObjects.add(a);
+        		}
+        	}
+        }
+    }
+    
+    //Set our team name for comparison with AbstractActionableObjects
+    // static so we don't have to do passthrough parameter passing from prescience
+    public static void setTeamName(String name) {
+    	TeamName = name;
     }
 
 //
