@@ -22,6 +22,11 @@ import spacesettlers.utilities.Vector2D;
 
 
 public class Knowledge {
+	
+	private static final double BASE_ENERGY_THRESHOLD = 1000;
+	private static final double SHIP_ENERGY_THRESHOLD = 1000;
+	private static final double SHIP_RESOURCE_THRESHOLD = 1000;
+	
     //Our knowledge object holds a copy of everything
     //currently in space. All knowledge will be derived from this object.
     //We need our own allObjects because space doesn't have an accessor for
@@ -29,7 +34,7 @@ public class Knowledge {
     Set<AbstractObject> allObjects;
     Toroidal2DPhysics space;
     Set<AbstractActionableObject> teamObjects;
-
+    
     public Knowledge(Toroidal2DPhysics gamespace) {
         allObjects = new HashSet<AbstractObject>();
         this.allObjects.addAll(gamespace.getAllObjects());
@@ -111,7 +116,33 @@ public class Knowledge {
         return null;
     }
 
-
+    //
+    //Boolean functions for planning
+    //
+    
+    public Boolean HasEnergy(AbstractObject o) {
+    	if (o instanceof Ship) {
+    		Ship s = (Ship)o;
+    		return s.getEnergy() > SHIP_ENERGY_THRESHOLD;
+    	}
+    	if (o instanceof Base) {
+    		Base b = (Base)o;
+    		return b.getEnergy() > BASE_ENERGY_THRESHOLD;
+    	}
+    	return false;
+    }
+    
+    public Boolean HasResources(Ship s) {
+    	return s.getResources().getTotal() > SHIP_RESOURCE_THRESHOLD;
+    }
+    
+    //returns true if there are less ships than double the number of bases,
+    // so we should buy a ship before a base
+    public Boolean PurchasePriorityIsShip(){
+    	return this.getAllTeamObjects().getShips().getObjects().size() < 
+    			this.getAllTeamObjects().getBases().getObjects().size()*2;
+    	
+    }
 
     //
     //Everything from here on returns a knowledge object
