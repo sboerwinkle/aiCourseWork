@@ -182,6 +182,21 @@ class Prescience extends Thread {
 
     }
 
+    public String getShipStateString(Ship ship) {
+    	
+    	boolean query1 = knowledge.HasEnergy(knowledge.getAllTeamObjects().getBases().getClosestTo(ship.getPosition()));
+    	boolean query2 = knowledge.HasEnergy(ship);
+    	boolean query3 = knowledge.HasResources(ship);
+    	
+    	String state = "(#f";
+    	state = query1 ? state + " #t" : state + " #f";
+    	state = query2 ? state + " #t" : state + " #f";
+    	state = query3 ? state + " #t" : state + " #f";
+    	state = state + ")";
+    	
+    	return state;
+    }
+    
     //public AbstractAction getShipMovement(Ship ship) {
     public Path getShipPath(Ship ship) {
         if(simulationKnowledge == null)
