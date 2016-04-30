@@ -38,8 +38,7 @@ public class Knowledge {
     public Knowledge(Toroidal2DPhysics gamespace) {
         allObjects = new HashSet<AbstractObject>();
         this.allObjects.addAll(gamespace.getAllObjects());
-        this.teamObjects = new HashSet<AbstractActionableObject>();
-        updateAllTeamObjects(gamespace);
+        this.teamObjects = null;
         this.space=gamespace;
     }
 
@@ -65,15 +64,6 @@ public class Knowledge {
         space=gamespace;
     }
     
-    //Refresh list of all objects and list of team objects
-    public void update(Toroidal2DPhysics gamespace) {
-    	allObjects.clear();
-        teamObjects.clear();
-        allObjects.addAll(gamespace.getAllObjects());
-        updateAllTeamObjects(gamespace);
-        space=gamespace;
-    }
-
     public boolean isTeamObject(AbstractObject obj) {
         UUID id = obj.getId();
         for(AbstractActionableObject actObj : teamObjects) {
