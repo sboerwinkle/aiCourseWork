@@ -169,9 +169,13 @@ public class Knowledge {
         return new Knowledge(space,teamObjects).addObjects(know.getObjects());
     }
 
-    public Knowledge setDiff(Knowledge know) {
+    public Knowledge difference(Knowledge know) {
+	    return setDiff(know.allObjects);
+    }
+
+    public Knowledge setDiff(Set<AbstractObject> set) {
 	    Knowledge ret = new Knowledge(space, teamObjects, allObjects);
-	    ret.allObjects.removeAll(know.allObjects);
+	    ret.allObjects.removeAll(set);
 	    return ret;
     }
 

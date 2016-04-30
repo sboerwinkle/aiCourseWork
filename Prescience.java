@@ -72,6 +72,7 @@ class Prescience extends Thread {
     Map<UUID, AbstractAction> workingActions = new HashMap<UUID, AbstractAction>();
     Map<UUID, Path> workingPaths = new HashMap<UUID, Path>();
     Map<UUID, ShipState> workingShipStates = new HashMap<UUID, ShipState>();
+    HashSet<AbstractObject> workingTargets = new HashSet<AbstractObject>(); // The set of objects that are being pursued.
     /////////////////////////////////////////////////////////
 
 
@@ -152,6 +153,7 @@ class Prescience extends Thread {
                     }
                 }*/
 
+		workingTargets.clear();
                 for(AbstractActionableObject obj: simulationKnowledge.getTeamObjects()) {
                     if(obj instanceof Ship) {
                         Ship ship = (Ship) obj;
@@ -232,7 +234,8 @@ class Prescience extends Thread {
 
         switch(currentShipState) {
         case GATHERING_ENERGY:
-            goalObject = simulationKnowledge.getEnergySources(2000).getClosestTo(ship.getPosition());
+            goalObject = simulationKnowledge.getEnergySources(2000).setDiff(workingTargets).getClosestTo(ship.getPosition());
+	    workingTargets.add(goalObject);
             goal = goalObject.getPosition();
             state.setShooting(false);
             break;
@@ -245,7 +248,8 @@ class Prescience extends Thread {
             break;
         case GATHERING_RESOURCES:
         default:
-            goalObject = simulationKnowledge.getMineableAsteroids().getClosestTo(ship.getPosition());
+            goalObject = simulationKnowledge.getMineableAsteroids().setDiff(workingTargets).getClosestTo(ship.getPosition());
+	    workingTargets.add(goalObject);
             goal = goalObject.getPosition();
             state.setShooting(true);
 
@@ -264,7 +268,7 @@ class Prescience extends Thread {
         SpacewarGraphics aimpointgraphic = new CircleGraphics(3, Color.GREEN,aimPoint);
         workingGraphics.add(aimpointgraphic);
 
-        Path p = AStar.doAStar(space, ship, goalObject, simulationKnowledge.setDiff(simulationKnowledge.getMineableAsteroids()));
+        Path p = AStar.doAStar(space, ship, goalObject, simulationKnowledge.difference(simulationKnowledge.getMineableAsteroids()));
 
         movement = pdController.getRawAction(space,ship.getPosition(),goal,aimPoint);
         //return movement;
