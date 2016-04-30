@@ -49,6 +49,9 @@ class Prescience extends Thread {
     //Factor to multiply the old timestep by in SpaceSimulation
     final double SIMULATION_TIMESTEP_SCALING_FACTOR = 20;
 
+    //Distance to try to space out bases when purchasing.
+    final double SAFE_BASE_DIST = 200;
+    
     //Thread pool for my spaceSim;
     ExecutorService executor;
 
@@ -351,10 +354,72 @@ class Prescience extends Thread {
             ResourcePile resourcesAvailable,
             PurchaseCosts purchaseCosts) {
         HashMap<UUID, PurchaseTypes> purchases = new HashMap<UUID, PurchaseTypes>();
+        
+        //implement purchasing logic based on planning actions
+        
+        if(purchaseCosts.canAfford(PurchaseTypes.SHIP, resourcesAvailable)) {
+        	
+        	if(knowledge.PurchasePriorityIsShip()){
+        		for (AbstractActionableObject obj : actionableObjects){
+        			if (obj instanceof Base){
+        				purchases.put(obj.getId(), PurchaseTypes.SHIP);
+        				break;
+        			}
+        		}
+        		
+        	}
+        	
+        	else if(purchaseCosts.canAfford(PurchaseTypes.BASE, resourcesAvailable)){
+        		
+        		//but put base at safe distance
+            	for(AbstractActionableObject obj : actionableObjects) {
+                    if(obj instanceof Ship) {
+                        boolean safeToMakeBase = true;
+                        for(AbstractActionableObject baseMaybe : actionableObjects) {
+                            if(baseMaybe instanceof Base) {
+                                if(space.findShortestDistance(obj.getPosition(),baseMaybe.getPosition()) < SAFE_BASE_DIST)
+                                    safeToMakeBase = false;
+
+                            }
+
+                        }
+                        if(safeToMakeBase) {
+                            purchases.put(obj.getId(),PurchaseTypes.BASE);
+                            break;
+                        }
+
+                    }
+                }
+        	}
+        }
+        
+        else if(purchaseCosts.canAfford(PurchaseTypes.BASE, resourcesAvailable) 
+        		&& !knowledge.PurchasePriorityIsShip()){
+        	
+        	//but put base at safe distance
+        	for(AbstractActionableObject obj : actionableObjects) {
+                if(obj instanceof Ship) {
+                    boolean safeToMakeBase = true;
+                    for(AbstractActionableObject baseMaybe : actionableObjects) {
+                        if(baseMaybe instanceof Base) {
+                            if(space.findShortestDistance(obj.getPosition(),baseMaybe.getPosition()) < SAFE_BASE_DIST)
+                                safeToMakeBase = false;
+                        }
+                    }
+                    if(safeToMakeBase) {
+                        purchases.put(obj.getId(),PurchaseTypes.BASE);
+                        break;
+                    }
+
+                }
+            }
+
+        }
+        	
         if(purchaseCosts.canAfford(PurchaseTypes.BASE, resourcesAvailable)) {
             for(AbstractActionableObject obj : actionableObjects) {
                 if(obj instanceof Ship) {
-                    boolean safeToMakeBase = true;;
+                    boolean safeToMakeBase = true;
                     for(AbstractActionableObject baseMaybe : actionableObjects) {
                         if(baseMaybe instanceof Base) {
                             if(space.findShortestDistance(obj.getPosition(),baseMaybe.getPosition()) < 200)
