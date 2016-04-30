@@ -125,9 +125,12 @@ class Prescience extends Thread {
                 newKnowledge = false;
                 workingActions.clear();
 		workingPaths.clear();
-                long ticksSinceKnowledgeUpdate = knowledgeUpdates % 20;
+                //long ticksSinceKnowledgeUpdate = knowledgeUpdates % 20;
                 workingGraphics.clear(); // Do it here since getShipMovement draws the goal now
-                if(ticksSinceKnowledgeUpdate == 0) {
+		synchronized(knowledge) {
+			simulationKnowledge = new Knowledge(knowledge);
+		}
+                /*if(ticksSinceKnowledgeUpdate == 0) {
                     //workingGraphics.clear();
 
                     space = knowledge.getSpace();
@@ -147,9 +150,9 @@ class Prescience extends Thread {
                             //workingGraphics.add(graphic);
                         }
                     }
-                }
+                }*/
 
-                for(AbstractActionableObject obj: knowledge.getTeamObjects()) {
+                for(AbstractActionableObject obj: simulationKnowledge.getTeamObjects()) {
                     if(obj instanceof Ship) {
                         Ship ship = (Ship) obj;
                         //AbstractAction movement = getShipMovement(ship);
@@ -184,10 +187,8 @@ class Prescience extends Thread {
 
     //public AbstractAction getShipMovement(Ship ship) {
     public Path getShipPath(Ship ship) {
-        if(simulationKnowledge == null)
-            simulationKnowledge = knowledge;
 
-        Toroidal2DPhysics space = knowledge.getSpace();
+        Toroidal2DPhysics space = simulationKnowledge.getSpace();
         AbstractAction movement = null;
         ShipState state = null;
         ShipStateEnum currentShipState = null;
@@ -216,12 +217,12 @@ class Prescience extends Thread {
 
         switch(currentShipState) {
         case GATHERING_ENERGY:
-            goalObject = knowledge.getEnergySources(2000).getClosestTo(ship.getPosition());
+            goalObject = simulationKnowledge.getEnergySources(2000).getClosestTo(ship.getPosition());
             goal = goalObject.getPosition();
             state.setShooting(false);
             break;
         case DELIVERING_RESOURCES:
-            goalObject = knowledge.getAllTeamObjects()
+            goalObject = simulationKnowledge.getAllTeamObjects()
                          .getBases()
                          .getClosestTo(ship.getPosition());
             goal = goalObject.getPosition();
@@ -229,7 +230,7 @@ class Prescience extends Thread {
             break;
         case GATHERING_RESOURCES:
         default:
-            goalObject = knowledge.getMineableAsteroids().getClosestTo(ship.getPosition());
+            goalObject = simulationKnowledge.getMineableAsteroids().getClosestTo(ship.getPosition());
             goal = goalObject.getPosition();
             state.setShooting(true);
 
@@ -249,13 +250,6 @@ class Prescience extends Thread {
         workingGraphics.add(aimpointgraphic);
 
         Path p = AStar.doAStar(space, ship, goalObject, simulationKnowledge.setDiff(simulationKnowledge.getMineableAsteroids()));
-        //System.out.println("goalObject: " + goalObject + " p.isValid: " + p.isValid());
-	System.out.println(p==null?"No path":"Path");
-        //Vector2D thrust = (p == null) ? new Vector2D() : p.getThrust(space);
-        /*double angle = thrust.getAngle();
-        System.out.println(angle-oldAngle);
-        oldAngle = angle;*/
-        //Vector2D thrust = KnowledgeRepOne.doStepGetThrust(ship, space);
 
         movement = pdController.getRawAction(space,ship.getPosition(),goal,aimPoint);
         //return movement;

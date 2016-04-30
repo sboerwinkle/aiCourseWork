@@ -44,6 +44,12 @@ public class Knowledge {
         this.space=gamespace;
     }
 
+    public Knowledge(Knowledge other) {
+	    this.space = other.space;
+	    allObjects = new HashSet<AbstractObject>(other.allObjects);
+	    teamObjects = new HashSet<AbstractActionableObject>(other.teamObjects);
+    }
+
     public Knowledge(Toroidal2DPhysics gamespace, Set<AbstractActionableObject> teamObjects) {
         allObjects = new HashSet<AbstractObject>();
         this.allObjects.addAll(gamespace.getAllObjects());
