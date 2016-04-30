@@ -415,27 +415,6 @@ class Prescience extends Thread {
             }
 
         }
-        	
-        if(purchaseCosts.canAfford(PurchaseTypes.BASE, resourcesAvailable)) {
-            for(AbstractActionableObject obj : actionableObjects) {
-                if(obj instanceof Ship) {
-                    boolean safeToMakeBase = true;
-                    for(AbstractActionableObject baseMaybe : actionableObjects) {
-                        if(baseMaybe instanceof Base) {
-                            if(space.findShortestDistance(obj.getPosition(),baseMaybe.getPosition()) < 200)
-                                safeToMakeBase = false;
-
-                        }
-
-                    }
-                    if(safeToMakeBase) {
-                        purchases.put(obj.getId(),PurchaseTypes.BASE);
-                        break;
-                    }
-
-                }
-            }
-        }
         return purchases;
 
     }
