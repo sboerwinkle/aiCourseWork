@@ -1645,9 +1645,9 @@ public class Vole{
 
 	public Vole(Reader input, Writer output, Writer error){
 
-		this.reader = new BufferedReader(new InputStreamReader(System.in));
-		this.writer = new BufferedWriter(new OutputStreamWriter(System.out));
-		this.error = new BufferedWriter(new OutputStreamWriter(System.err));
+		this.reader = new BufferedReader(input);
+		this.writer = new BufferedWriter(output);
+		this.error = new BufferedWriter(error);
 		this.env = new Environment();
 		this.env.concat(CoreLispLib.getEnv());
 		
