@@ -309,7 +309,7 @@ class Prescience extends Thread {
         SpacewarGraphics aimpointgraphic = new CircleGraphics(3, Color.GREEN,aimPoint);
         workingGraphics.add(aimpointgraphic);
 
-        Path p = AStar.doAStar(space, ship, goalObject, simulationKnowledge.difference(simulationKnowledge.getMineableAsteroids()));
+        Path p = AStar.doAStar(space, ship, goalObject, simulationKnowledge.difference(simulationKnowledge.getDelicious()));
 
         movement = pdController.getRawAction(space,ship.getPosition(),goal,aimPoint);
         //return movement;

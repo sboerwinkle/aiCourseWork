@@ -103,7 +103,7 @@ public class AStar {
 		nextPos.setxVelocity(oldX+vx);
 		nextPos.setyVelocity(oldY+vy);
 		Node next = new Node(nextPos, dir, top, top.g+timestep);
-		if (thingOccludesStep(destination, s, 1.0)) {
+		if (thingOccludesStep(destination, s, 0.8)) {
 			cond = false;
 			top = next;
 			break;
@@ -207,7 +207,7 @@ public class AStar {
      * @return true iff nothing would block the path of 'me' as it travels along Step s
      */
     static boolean stepOkay(Step s) {
-	for (AbstractObject o : obstacles) if (!sameThing(o, me) && !sameThing(o, destination) && thingOccludesStep(o, s, 1.3)) return false;
+	for (AbstractObject o : obstacles) if (!sameThing(o, me) && !sameThing(o, destination) && thingOccludesStep(o, s, 1.0)) return false;
         return true;
     }
 
