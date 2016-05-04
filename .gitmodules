@@ -1,3 +1,6 @@
 [submodule "Vole"]
 	path = Vole
 	url = https://github.com/rbryan/Vole
+[submodule "vole"]
+	path = vole
+	url = https://github.com/rbryan/vole
