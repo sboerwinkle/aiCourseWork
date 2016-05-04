@@ -23,8 +23,8 @@ import spacesettlers.utilities.Vector2D;
 
 public class Knowledge {
 	
-	private static final double BASE_ENERGY_THRESHOLD = 1000;
-	private static final double SHIP_ENERGY_THRESHOLD = 1000;
+	private static final double BASE_ENERGY_THRESHOLD = 3000;
+	private static final double SHIP_ENERGY_THRESHOLD = 2000;
 	private static final double SHIP_RESOURCE_THRESHOLD = 1000;
 	
     //Our knowledge object holds a copy of everything
