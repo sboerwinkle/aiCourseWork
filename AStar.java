@@ -77,11 +77,11 @@ public class AStar {
 	    }*/
             top = q.poll();
             if (top == null) {
-		    System.out.println("Ran out of options.");
+		    //System.out.println("Ran out of options.");
 		    return null;
 	    }
 	    if (top.g > maxTime) {
-		    System.out.println("Best option was too far out");
+		    //System.out.println("Best option was too far out");
 		    return null;
 	    }
 	    //if (top.h < timeStep * top.nextDuration) break;
@@ -103,7 +103,7 @@ public class AStar {
 		nextPos.setxVelocity(oldX+vx);
 		nextPos.setyVelocity(oldY+vy);
 		Node next = new Node(nextPos, dir, top, top.g+timestep);
-		if (thingOccludesStep(destination, s, 1.0)) {
+		if (thingOccludesStep(destination, s, 0.8)) {
 			cond = false;
 			top = next;
 			break;
@@ -207,7 +207,7 @@ public class AStar {
      * @return true iff nothing would block the path of 'me' as it travels along Step s
      */
     static boolean stepOkay(Step s) {
-	for (AbstractObject o : obstacles) if (!sameThing(o, me) && !sameThing(o, destination) && thingOccludesStep(o, s, 1.3)) return false;
+	for (AbstractObject o : obstacles) if (!sameThing(o, me) && !sameThing(o, destination) && thingOccludesStep(o, s, 1.0)) return false;
         return true;
     }
 
