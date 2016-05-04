@@ -77,11 +77,11 @@ public class AStar {
 	    }*/
             top = q.poll();
             if (top == null) {
-		    System.out.println("Ran out of options.");
+		    //System.out.println("Ran out of options.");
 		    return null;
 	    }
 	    if (top.g > maxTime) {
-		    System.out.println("Best option was too far out");
+		    //System.out.println("Best option was too far out");
 		    return null;
 	    }
 	    //if (top.h < timeStep * top.nextDuration) break;

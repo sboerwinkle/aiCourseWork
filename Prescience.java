@@ -233,7 +233,7 @@ class Prescience extends Thread {
 
 	String shipStateString = getShipStateString(ship);
 	
-	String program = "(define state " + shipStateString + ") (write (if (caddr state) (if (cadr state) 2 (if (car state) 2 0)) (if (cadr state) 1 0)) (current-output-port))";
+	/*String program = "(define state " + shipStateString + ") (write (if (caddr state) (if (cadr state) 2 (if (car state) 2 0)) (if (cadr state) 1 0)) (current-output-port))";
 
 	StringWriter output = new StringWriter();
 
@@ -245,14 +245,17 @@ class Prescience extends Thread {
 
 	int actionNum = Integer.parseInt(output.toString());
 
-	System.err.println(actionNum);
+	System.err.println(actionNum);*/
+
+	String[] things = shipStateString.split("#");
+	int actionNum = (things[4].startsWith("t") ? (things[3].startsWith("t") ? 2 : (things[2].startsWith("t") ? 2 : 0)) : (things[3].startsWith("t") ? 1 : 0));
 
 	switch(actionNum){
 		case 0:
-			currentShipState = ShipStateEnum.GATHERING_RESOURCES;
+			currentShipState = ShipStateEnum.GATHERING_ENERGY;
 			break;
 		case 1:
-			currentShipState = ShipStateEnum.GATHERING_ENERGY;
+			currentShipState = ShipStateEnum.GATHERING_RESOURCES;
 			break;
 		case 2:
 			currentShipState = ShipStateEnum.DELIVERING_RESOURCES;
