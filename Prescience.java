@@ -1,6 +1,9 @@
 
 package barn1474;
 
+import Vole.Vole;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -196,7 +199,7 @@ class Prescience extends Thread {
     	boolean query2 = knowledge.HasEnergy(ship);
     	boolean query3 = knowledge.HasResources(ship);
     	
-    	String state = "(#f";
+    	String state = "(list #f";
     	state = query1 ? state + " #t" : state + " #f";
     	state = query2 ? state + " #t" : state + " #f";
     	state = query3 ? state + " #t" : state + " #f";
@@ -227,6 +230,38 @@ class Prescience extends Thread {
         }
 
         currentShipState = state.getState();
+
+	String shipStateString = getShipStateString(ship);
+	
+	String program = "(define state " + shipStateString + ") (write (if (caddr state) (if (cadr state) 2 (if (car state) 2 0)) (if (cadr state) 1 0)) (current-output-port))";
+
+	StringWriter output = new StringWriter();
+
+	Vole vole = new Vole(new StringReader(program),output, output);
+	vole.eval();
+	vole.eval();
+
+	output.flush();
+
+	int actionNum = Integer.parseInt(output.toString());
+
+	System.err.println(actionNum);
+
+	switch(actionNum){
+		case 0:
+			currentShipState = ShipStateEnum.GATHERING_RESOURCES;
+			break;
+		case 1:
+			currentShipState = ShipStateEnum.GATHERING_ENERGY;
+			break;
+		case 2:
+			currentShipState = ShipStateEnum.DELIVERING_RESOURCES;
+			break;
+		default:
+			currentShipState = ShipStateEnum.DELIVERING_RESOURCES;
+			break;
+	}
+	
 
         /* To be critically damped, the parameters must satisfy:
         * 2 * sqrt(Kp) = Kv*/
